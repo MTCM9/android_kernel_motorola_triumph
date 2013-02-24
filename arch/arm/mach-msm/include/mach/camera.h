@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009-2010, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -44,7 +44,6 @@
 #define NUM_STAT_OUTPUT_BUFFERS      3
 #define NUM_AF_STAT_OUTPUT_BUFFERS      3
 #define max_control_command_size 150
-#define CROP_LEN 36
 
 enum msm_queue {
 	MSM_CAM_Q_CTRL,     /* control command or control command status */
@@ -83,12 +82,6 @@ enum vpe_resp_msg {
 	VPE_MSG_OUTPUT_T,   /* thumbnail (snapshot mode )*/
 	VPE_MSG_OUTPUT_S,   /* main image (snapshot mode )*/
 	VPE_MSG_OUTPUT_V,   /* video   (continuous mode ) */
-};
-
-enum msm_camera_type {
-	BACK_CAMERA_2D,
-	FRONT_CAMERA_2D,
-	BACK_CAMERA_3D,
 };
 
 struct msm_vpe_phy_info {
@@ -171,7 +164,6 @@ struct msm_camvfe_fn {
 	int (*vfe_disable)(struct camera_enable_cmd *,
 		struct platform_device *dev);
 	void (*vfe_release)(struct platform_device *);
-	void (*vfe_stop)(void);
 };
 
 struct msm_camvpe_fn {
@@ -187,15 +179,13 @@ struct msm_sensor_ctrl {
 	int (*s_init)(const struct msm_camera_sensor_info *);
 	int (*s_release)(void);
 	int (*s_config)(void __user *);
-	enum msm_camera_type s_camera_type;
-	uint32_t s_mount_angle;
 };
 struct msm_strobe_flash_ctrl {
 	int (*strobe_flash_init)
 		(struct msm_camera_sensor_strobe_flash_data *);
 	int (*strobe_flash_release)
-		(struct msm_camera_sensor_strobe_flash_data *, int32_t);
-	int (*strobe_flash_charge)(int32_t, int32_t, uint32_t);
+		(struct msm_camera_sensor_strobe_flash_data *);
+	int (*strobe_flash_charge)(int32_t, int32_t);
 };
 
 /* this structure is used in kernel */
@@ -256,14 +246,9 @@ struct msm_sync {
 	struct msm_strobe_flash_ctrl sfctrl;
 	struct wake_lock wake_lock;
 	struct platform_device *pdev;
-	int16_t ignore_qcmd_type;
-	uint8_t ignore_qcmd;
 	uint8_t opencnt;
 	void *cropinfo;
 	int  croplen;
-	int  core_powered_on;
-
-	struct fd_roi_info fdroiinfo;
 
 	atomic_t vpe_enable;
 	uint32_t pp_mask;
@@ -278,7 +263,7 @@ struct msm_sync {
 	struct mutex lock;
 	struct list_head list;
 	uint8_t liveshot_enabled;
-	struct msm_cam_v4l2_device *pcam_sync;
+
 	spinlock_t pmem_frame_spinlock;
 	spinlock_t pmem_stats_spinlock;
 	spinlock_t abort_pict_lock;
@@ -332,36 +317,28 @@ struct axidata {
 };
 
 #ifdef CONFIG_MSM_CAMERA_FLASH
-int msm_camera_flash_set_led_state(
-	struct msm_camera_sensor_flash_data *fdata,
-	unsigned led_state);
-int msm_strobe_flash_init(struct msm_sync *sync, uint32_t sftype);
-int msm_flash_ctrl(struct msm_camera_sensor_info *sdata,
-			struct flash_ctrl_data *flash_info);
+	int msm_camera_flash_set_led_state(
+		struct msm_camera_sensor_flash_data *fdata,
+		unsigned led_state);
+	int msm_strobe_flash_init(struct msm_sync *sync, uint32_t sftype);
 #else
-static inline int msm_camera_flash_set_led_state(
-	struct msm_camera_sensor_flash_data *fdata,
-	unsigned led_state)
-{
-	return -ENOTSUPP;
-}
-static inline int msm_strobe_flash_init(
-	struct msm_sync *sync, uint32_t sftype)
-{
-	return -ENOTSUPP;
-}
-static inline int msm_flash_ctrl(
-		struct msm_camera_sensor_info *sdata,
-		struct flash_ctrl_data *flash_info)
-{
-	return -ENOTSUPP;
-}
+	static inline int msm_camera_flash_set_led_state(
+		struct msm_camera_sensor_flash_data *fdata,
+		unsigned led_state)
+	{
+		return -ENOTSUPP;
+	}
+	static inline int msm_strobe_flash_init(
+		struct msm_sync *sync, uint32_t sftype)
+	{
+		return -ENOTSUPP;
+	}
 #endif
 
 /* Below functions are added for V4L2 kernel APIs */
 struct msm_v4l2_driver {
 	struct msm_sync *sync;
-	int (*open)(struct msm_sync *, const char *apps_id, int);
+	int (*open)(struct msm_sync *, const char *apps_id);
 	int (*release)(struct msm_sync *);
 	int (*ctrl)(struct msm_sync *, struct msm_ctrl_cmd *);
 	int (*reg_pmem)(struct msm_sync *, struct msm_pmem_info *);
@@ -445,15 +422,6 @@ enum msm_s_setting {
 	S_RES_CAPTURE
 };
 
-enum msm_bus_perf_setting {
-	S_INIT,
-	S_PREVIEW,
-	S_VIDEO,
-	S_CAPTURE,
-	S_DEFAULT,
-	S_EXIT
-};
-
 int msm_camio_enable(struct platform_device *dev);
 int msm_camio_jpeg_clk_enable(void);
 int msm_camio_jpeg_clk_disable(void);
@@ -464,7 +432,6 @@ int  msm_camio_clk_enable(enum msm_camio_clk_type clk);
 int  msm_camio_clk_disable(enum msm_camio_clk_type clk);
 int  msm_camio_clk_config(uint32_t freq);
 void msm_camio_clk_rate_set(int rate);
-void msm_camio_vfe_clk_rate_set(int rate);
 void msm_camio_clk_rate_set_2(struct clk *clk, int rate);
 void msm_camio_clk_set_min_rate(struct clk *clk, int rate);
 void msm_camio_clk_axi_rate_set(int rate);
@@ -491,5 +458,5 @@ u32 msm_io_r(void __iomem *addr);
 u32 msm_io_r_mb(void __iomem *addr);
 void msm_io_dump(void __iomem *addr, int size);
 void msm_io_memcpy(void __iomem *dest_addr, void __iomem *src_addr, u32 len);
-void msm_camio_set_perf_lvl(enum msm_bus_perf_setting);
+
 #endif

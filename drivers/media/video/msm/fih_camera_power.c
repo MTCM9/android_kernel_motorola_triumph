@@ -30,7 +30,7 @@ int fih_cam_output_gpio_control(unsigned gpio, const char *sensor, int value)
     {
         printk(KERN_ERR "%s: %s: ERR: Request gpio %d failed !\n", __func__, sensor, gpio);
         return rc;
-    }
+    }	
     gpio_free(gpio);
     return rc;
         
@@ -110,3 +110,4 @@ fih_cam_fail:
     
     return rc;
 }
+

@@ -1,34 +1,19 @@
-/* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009-2010, Code Aurora Forum. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, and the entire permission notice in its entirety,
- *    including the disclaimer of warranties.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
  *
- * ALTERNATIVELY, this product may be distributed under the terms of
- * the GNU General Public License, version 2, in which case the provisions
- * of the GPL version 2 are required INSTEAD OF the BSD license.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ALL OF
- * WHICH ARE HEREBY DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- * USE OF THIS SOFTWARE, EVEN IF NOT ADVISED OF THE POSSIBILITY OF SUCH
- * DAMAGE.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ *
  */
 
 #ifndef __LINUX_MSM_CAMERA_H
@@ -38,6 +23,7 @@
 #include <sys/types.h>
 #endif
 #include <linux/types.h>
+#include <asm/sizes.h>
 #include <linux/ioctl.h>
 #ifdef MSM_CAMERA_GCC
 #include <time.h>
@@ -140,21 +126,17 @@
 #define MSM_CAM_IOCTL_STROBE_FLASH_RELEASE \
 	_IO(MSM_CAM_IOCTL_MAGIC, 31)
 
-#define MSM_CAM_IOCTL_FLASH_CTRL \
-	_IOW(MSM_CAM_IOCTL_MAGIC, 32, struct flash_ctrl_data *)
-
 #define MSM_CAM_IOCTL_ERROR_CONFIG \
-	_IOW(MSM_CAM_IOCTL_MAGIC, 33, uint32_t *)
+	_IOW(MSM_CAM_IOCTL_MAGIC, 32, uint32_t *)
 
 #define MSM_CAM_IOCTL_ABORT_CAPTURE \
-	_IO(MSM_CAM_IOCTL_MAGIC, 34)
-
-#define MSM_CAM_IOCTL_SET_FD_ROI \
-	_IOW(MSM_CAM_IOCTL_MAGIC, 35, struct fd_roi_info *)
-
-#define MSM_CAM_IOCTL_GET_CAMERA_INFO \
-	_IOR(MSM_CAM_IOCTL_MAGIC, 36, struct msm_camera_info *)
-
+	_IO(MSM_CAM_IOCTL_MAGIC, 33)
+//Div6D1-HL-Camera-BringUp-00+{
+#ifdef CONFIG_FIH_CONFIG_GROUP
+#define MSM_CAM_IOCTL_GET_FIH_SENSOR_INFO  \
+	_IOR(MSM_CAM_IOCTL_MAGIC, 34, struct msm_camsensor_info *)
+#endif
+//Div6D1-HL-Camera-BringUp-00+}
 #define MSM_CAMERA_LED_OFF  0
 #define MSM_CAMERA_LED_LOW  1
 #define MSM_CAMERA_LED_HIGH 2
@@ -162,7 +144,7 @@
 #define MSM_CAMERA_STROBE_FLASH_NONE 0
 #define MSM_CAMERA_STROBE_FLASH_XENON 1
 
-#define MSM_MAX_CAMERA_SENSORS  5
+#define MAX_SENSOR_NUM  3
 #define MAX_SENSOR_NAME 32
 
 #define PP_SNAP  0x01
@@ -202,28 +184,12 @@ struct msm_vfe_evt_msg {
 	void *data;
 };
 
-struct msm_isp_evt_msg {
-	unsigned short type;	/* 1 == event (RPC), 0 == message (adsp) */
-	unsigned short msg_id;
-	unsigned int len;	/* size in, number of bytes out */
-	/* maximum possible data size that can be
-i	  sent to user space as v4l2 data structure
-	  is only of 64 bytes */
-	uint8_t data[48];
-};
 struct msm_vpe_evt_msg {
 	unsigned short type; /* 1 == event (RPC), 0 == message (adsp) */
 	unsigned short msg_id;
 	unsigned int len; /* size in, number of bytes out */
 	uint32_t frame_id;
 	void *data;
-};
-struct msm_isp_stats_event_ctrl {
-	unsigned short resptype;
-	union {
-		struct msm_isp_evt_msg isp_msg;
-		struct msm_ctrl_cmd ctrl;
-	} isp_data;
 };
 
 #define MSM_CAM_RESP_CTRL         0
@@ -397,11 +363,6 @@ struct outputCfg {
 #define OUTPUT_TYPE_V		(1<<3)
 #define OUTPUT_TYPE_L		(1<<4)
 
-struct fd_roi_info {
-	void *info;
-	int info_len;
-};
-
 struct msm_frame {
 	struct timespec ts;
 	int path;
@@ -413,7 +374,6 @@ struct msm_frame {
 	void *cropinfo;
 	int croplen;
 	uint32_t error_code;
-	struct fd_roi_info roi_info;
 };
 
 #define MSM_CAMERA_ERR_MASK (0xFFFFFFFF & 1)
@@ -481,27 +441,30 @@ struct msm_snapshot_pp_status {
 #define CFG_GET_PICT_P_PL		25
 #define CFG_GET_AF_MAX_STEPS		26
 #define CFG_GET_PICT_MAX_EXP_LC		27
-#define CFG_SEND_WB_INFO	28
-#define CFG_SET_LEDMOD	29
-#define CFG_SET_EXPOSUREMOD	30
-#define CFG_SET_SATURATION	31
-#define CFG_SET_SHARPNESS	32
-#define CFG_SET_HUE			33
-#define CFG_SET_GAMMA		34
-#define CFG_SET_AUTOEXPOSURE	35
-#define CFG_SET_AUTOFOCUS		36
-#define CFG_SET_METERINGMOD		37
-#define CFG_SET_SCENEMOD	38
-#define CFG_SET_FOCUSREC	39
-#define CFG_STROBE_FLASH	41
-#define CFG_SET_ISO			42
-#define CFG_SET_CAF			43
-#define CFG_SET_touchAEC	44
-#define CFG_SET_AFMODE		45
-#define CFG_SET_DIS			46
-#define CFG_GET_AFSTATE		47
-#define CFG_GET_AFRESULT	48 // FS,20111116
-#define CFG_MAX		49
+#define CFG_SEND_WB_INFO    28
+//Div6D1-HL-Camera-BringUp-00*{
+#ifdef CONFIG_FIH_CONFIG_GROUP
+#define CFG_SET_LEDMOD 29
+#define CFG_SET_EXPOSUREMOD 30
+#define CFG_SET_SATURATION 31
+#define CFG_SET_SHARPNESS 32
+#define CFG_SET_HUE	 33
+#define CFG_SET_GAMMA 34
+#define CFG_SET_AUTOEXPOSURE 35
+#define CFG_SET_AUTOFOCUS 36
+#define CFG_SET_METERINGMOD 37
+#define CFG_SET_SCENEMOD 38
+#define CFG_SET_FOCUSREC 39//Div6D1-CL-Camera-autofocus-01+
+#define CFG_STROBE_FLASH 41//Div2-SW6-MM-HL-Camera-Flash-02+
+#define CFG_SET_ISO 42//Div2-SW6-MM-HL-Camera-ISO-00+
+#define CFG_SET_CAF 43//Div2-SW6-MM-HL-Camera-CAF-00+
+#define CFG_SET_touchAEC 44
+#define CFG_MAX	45//Div2-SW6-MM-HL-Camera-ISO-00*
+#else
+#define CFG_MAX 			29
+#endif
+//Div6D1-HL-Camera-BringUp-00*}
+
 
 #define MOVE_NEAR	0
 #define MOVE_FAR	1
@@ -510,8 +473,8 @@ struct msm_snapshot_pp_status {
 #define SENSOR_SNAPSHOT_MODE		1
 #define SENSOR_RAW_SNAPSHOT_MODE	2
 #define SENSOR_VIDEO_120FPS_MODE	3
-#define SENSOR_RESET_MODE	4
-#define SENSOR_MIRROR_MODE	5
+#define SENSOR_RESET_MODE 4//Div2-SW6-MM-CL-mt9p111noImage-00+
+#define SENSOR_MIRROR_MODE 5////Div2-SW6-MM-CL-mirrorFront-00+
 
 #define SENSOR_QTR_SIZE			0
 #define SENSOR_FULL_SIZE		1
@@ -527,11 +490,15 @@ struct msm_snapshot_pp_status {
 #define CAMERA_EFFECT_WHITEBOARD	6
 #define CAMERA_EFFECT_BLACKBOARD	7
 #define CAMERA_EFFECT_AQUA		8
+//Div6D1-HL-Camera-BringUp-00*{
+#ifdef CONFIG_FIH_CONFIG_GROUP
 #define CAMERA_EFFECT_BLUISH		9
 #define CAMERA_EFFECT_REDDISH		10
 #define CAMERA_EFFECT_GREENISH		11
+//Div2-SW6-MM-MC-ImplementCameraColorBarMechanism-00*{
 #define CAMERA_EFFECT_COLORBAR		12
 #define CAMERA_EFFECT_MAX		13
+//Div2-SW6-MM-MC-ImplementCameraColorBarMechanism-00*}
 
 
 #define CAMERA_WB_MIN_MINUS_1		0
@@ -583,11 +550,11 @@ struct msm_snapshot_pp_status {
 #define CAMERA_SATURATION_POSITIVE1		3
 #define CAMERA_SATURATION_POSITIVE2		4
 
-#define CAMERA_SHARPNESS_MINUS2		0
-#define CAMERA_SHARPNESS_MINUS1		1
-#define CAMERA_SHARPNESS_ZERO		2
-#define CAMERA_SHARPNESS_POSITIVE1	3
-#define CAMERA_SHARPNESS_POSITIVE2	4
+#define CAMERA_SHARPNESS_MINUS2		0	//Div6D1-HL-Camera-Sharpness-00+
+#define CAMERA_SHARPNESS_MINUS1		1	//Div6D1-HL-Camera-Sharpness-00+
+#define CAMERA_SHARPNESS_ZERO		2	//Div6D1-HL-Camera-Sharpness-00*
+#define CAMERA_SHARPNESS_POSITIVE1	3	//Div6D1-HL-Camera-Sharpness-00*
+#define CAMERA_SHARPNESS_POSITIVE2	4	//Div6D1-HL-Camera-Sharpness-00*
 
 #define CAMERA_CONTRAST_MINUS2		0
 #define CAMERA_CONTRAST_MINUS1		1
@@ -602,31 +569,46 @@ struct msm_snapshot_pp_status {
 #define CAMERA_SCENE_MODE_NIGHTPORTRAIT		4
 #define CAMERA_SCENE_MODE_SUNSET		5
 
-#define CAMERA_BESTSHOT_OFF		0
-#define CAMERA_BESTSHOT_LANDSCAPE	1
-#define CAMERA_BESTSHOT_SNOW		2
-#define CAMERA_BESTSHOT_BEACH		3
-#define CAMERA_BESTSHOT_SUNSET		4
-#define CAMERA_BESTSHOT_NIGHT		5
-#define CAMERA_BESTSHOT_PORTRAIT	6
-#define CAMERA_BESTSHOT_BACKLIGHT	7
-#define CAMERA_BESTSHOT_SPORTS		8
-#define CAMERA_BESTSHOT_ANTISHAKE	9
-#define CAMERA_BESTSHOT_FLOWERS		10
-#define CAMERA_BESTSHOT_CANDLELIGHT	11
-#define CAMERA_BESTSHOT_FIREWORKS	12
-#define CAMERA_BESTSHOT_PARTY		13
-#define CAMERA_BESTSHOT_NIGHT_PORTRAIT	14
-#define CAMERA_BESTSHOT_THEATRE		15
-#define CAMERA_BESTSHOT_ACTION		16
+//Div6D1-CL-Camera-SensorInfo-01+{
+#define CAMERA_BESTSHOT_OFF 0
+#define CAMERA_BESTSHOT_LANDSCAPE 1
+#define CAMERA_BESTSHOT_SNOW 2
+#define CAMERA_BESTSHOT_BEACH 3
+#define CAMERA_BESTSHOT_SUNSET 4
+#define CAMERA_BESTSHOT_NIGHT 5
+#define CAMERA_BESTSHOT_PORTRAIT 6
+#define CAMERA_BESTSHOT_BACKLIGHT 7
+#define CAMERA_BESTSHOT_SPORTS 8
+#define CAMERA_BESTSHOT_ANTISHAKE 9
+#define CAMERA_BESTSHOT_FLOWERS 10
+#define CAMERA_BESTSHOT_CANDLELIGHT 11
+#define CAMERA_BESTSHOT_FIREWORKS 12
+#define CAMERA_BESTSHOT_PARTY 13
+#define CAMERA_BESTSHOT_NIGHT_PORTRAIT 14
+#define CAMERA_BESTSHOT_THEATRE 15
+#define CAMERA_BESTSHOT_ACTION 16
 
-#define FPS_MODE_AUTO	0
-#define FPS_MODE_FIXED	1
+#define FPS_MODE_AUTO 0
+#define FPS_MODE_FIXED 1
 
-#define AF_MODE_UNCHANGED	-1
-#define AF_MODE_NORMAL	0
-#define AF_MODE_MACRO	1
-#define AF_MODE_AUTO	2
+#define AF_MODE_UNCHANGED -1
+#define AF_MODE_NORMAL   0
+#define AF_MODE_MACRO 1
+#define AF_MODE_AUTO 2
+//Div6D1-CL-Camera-SensorInfo-01+}
+//Div6D1-HL-Camera-Camcorder_HD-00+{
+//Div6D1-CL-Camera-D1_WVGA-00*{
+#define CAMERA_PRECONFIG_VGA 0
+#define CAMERA_PRECONFIG_720P 1
+#define CAMERA_PRECONFIG_D1 2
+#define CAMERA_PRECONFIG_WVGA 3
+//Div6D1-CL-Camera-D1_WVGA-00*}
+//Div6D1-HL-Camera-Camcorder_HD-00+}
+#else
+#define CAMERA_EFFECT_MAX		9
+#endif
+//Div6D1-HL-Camera-BringUp-00*}
+
 
 struct sensor_pict_fps {
 	uint16_t prevfps;
@@ -655,128 +637,82 @@ struct wb_info_cfg {
 };
 
 struct touchAEC{
-	int enable;
-	uint32_t AEC_X;
-	uint32_t AEC_Y;
+    int enable;
+    uint32_t AEC_X;
+    uint32_t AEC_Y;
 };
 
-struct camera_focus_rectangle{
-	/* Focus Window dimensions */
-	int16_t x_upper_left;
-	int16_t y_upper_left;
-	int16_t width; 
-	int16_t height;
-};
+//Div6D1-CL-Camera-autofocus-01+{
+ struct camera_focus_rectangle{  
+    /* Focus Window dimensions */
+    int16_t x_upper_left;           
+    int16_t y_upper_left;
+    int16_t width; 
+    int16_t height;
+} ;
+//Div6D1-CL-Camera-autofocus-01+}
 
-/* Enum Type for different ISO Mode supported */
+ //Div2-SW6-MM-HL-Camera-ISO-01+{
+ //Div2-SW6-MM-HL-Camera-ISO-00+{
+ /* Enum Type for different ISO Mode supported */
 typedef enum
 {
-	CAMERA_ISO_ISO_AUTO = 0,
-	CAMERA_ISO_ISO_DEBLUR,
-	CAMERA_ISO_ISO_100,
-	CAMERA_ISO_ISO_200,
-	CAMERA_ISO_ISO_400,
-	CAMERA_ISO_ISO_800,
-	CAMERA_ISO_ISO_1600,
-	CAMERA_ISO_ISO_MAX
+  CAMERA_ISO_ISO_AUTO = 0,
+  CAMERA_ISO_ISO_DEBLUR,
+  CAMERA_ISO_ISO_100,
+  CAMERA_ISO_ISO_200,
+  CAMERA_ISO_ISO_400,
+  CAMERA_ISO_ISO_800,
+  CAMERA_ISO_ISO_1600,
+  CAMERA_ISO_ISO_MAX
 } camera_iso_mode;
+//Div2-SW6-MM-HL-Camera-ISO-00+}
+//Div2-SW6-MM-HL-Camera-ISO-01+}
 
 struct sensor_cfg_data {
-	int cfgtype;
-	int mode;
-	int rs;
-	uint8_t max_steps;
+    int cfgtype;
+    int mode;
+    int rs;
+    uint8_t max_steps;
 
-	union {
-		int8_t effect;
-		int8_t wb;
-		int8_t antibanding;
-		int8_t brightness;
-		int8_t ledmod;
-		int8_t exposuremod;
-		int8_t saturation;
-		int8_t sharpness;
-		int8_t contrast;
-		int8_t hue;
-		int8_t gamma;
-		int8_t autoexposure;
-		int8_t autofocus;
-		int8_t meteringmod;
-		int8_t scenemod;
-		int8_t CAF;
-		int8_t afmode;
-		int8_t dis;
-		struct touchAEC AECIndex;
-		struct camera_focus_rectangle focusrec;
-		camera_iso_mode iso;
-		uint8_t lens_shading;
-		uint16_t prevl_pf;
-		uint16_t prevp_pl;
-		uint16_t pictl_pf;
-		uint16_t pictp_pl;
-		uint32_t pict_max_exp_lc;
-		uint16_t p_fps;
-		struct sensor_pict_fps gfps;
-		struct exp_gain_cfg exp_gain;
-		struct focus_cfg focus;
-		struct fps_cfg fps;
-		struct wb_info_cfg wb_info;
-	} cfg;
-};
-
-enum flash_type {
-	LED_FLASH,
-	STROBE_FLASH,
-};
-
-enum strobe_flash_ctrl_type {
-	STROBE_FLASH_CTRL_INIT,
-	STROBE_FLASH_CTRL_CHARGE,
-	STROBE_FLASH_CTRL_RELEASE
-};
-
-struct strobe_flash_ctrl_data {
-	enum strobe_flash_ctrl_type type;
-	int charge_en;
-};
-struct fih_parameters_data {
-	uint32_t autoexposure;
-	uint32_t effects;
-	uint32_t wb;
-	uint32_t antibanding;
-	uint32_t flash;
-	uint32_t focus;
-	uint32_t ISO;
-	uint32_t lensshade;
-	uint32_t scenemode;
-	uint32_t continuous_af;
-	uint32_t touchafaec;
-	uint32_t frame_rate_modes;
-	int8_t  max_brightness;
-	int8_t  max_contrast;
-	int8_t  max_saturation;
-	int8_t  max_sharpness;
-	int8_t  min_brightness;
-	int8_t  min_contrast;
-	int8_t  min_saturation;
-	int8_t  min_sharpness;
-};
-
-struct msm_camera_info {
-	int num_cameras;
-	uint8_t has_3d_support[MSM_MAX_CAMERA_SENSORS];
-	uint32_t sensor_Orientation[MSM_MAX_CAMERA_SENSORS];
-	uint8_t is_internal_cam[MSM_MAX_CAMERA_SENSORS];
-	uint32_t s_mount_angle[MSM_MAX_CAMERA_SENSORS];
-	struct fih_parameters_data parameters_data[MSM_MAX_CAMERA_SENSORS];
-};
-
-struct flash_ctrl_data {
-	int flashtype;
-	union {
-		int led_state;
-		struct strobe_flash_ctrl_data strobe_ctrl;
-	} ctrl_data;
+    union {
+        int8_t effect;
+        //Div6D1-HL-Camera-BringUp-00+{
+#ifdef CONFIG_FIH_CONFIG_GROUP
+        int8_t wb;
+        int8_t antibanding;
+        int8_t brightness;
+        int8_t ledmod;
+        int8_t exposuremod;
+        int8_t saturation;
+        int8_t sharpness;
+        int8_t contrast;
+        int8_t hue;
+        int8_t gamma;
+        int8_t autoexposure;
+        int8_t autofocus;
+        int8_t meteringmod;
+        int8_t scenemod;
+        int8_t CAF;//Div2-SW6-MM-HL-Camera-CAF-00+
+        struct touchAEC AECIndex;
+        struct camera_focus_rectangle focusrec;//Div6D1-CL-Camera-autofocus-01+        
+        int8_t hd;//Div6D1-HL-Camera-Camcorder_HD-00+
+        camera_iso_mode iso;//Div2-SW6-MM-HL-Camera-ISO-00+
+#endif
+        //Div6D1-HL-Camera-BringUp-00+}
+        uint8_t lens_shading;
+        uint16_t prevl_pf;
+        uint16_t prevp_pl;
+        uint16_t pictl_pf;
+        uint16_t pictp_pl;
+        uint32_t pict_max_exp_lc;
+        uint16_t p_fps;
+        struct sensor_pict_fps gfps;
+        struct exp_gain_cfg exp_gain;
+        struct focus_cfg focus;
+        struct fps_cfg fps;
+        struct wb_info_cfg wb_info;
+    } cfg;
 };
 
 #define GET_NAME			0
@@ -788,29 +724,33 @@ struct flash_ctrl_data {
 #define GET_SNAPSHOT_MAX_EP_LINE_CNT	6
 
 struct msm_camsensor_info {
-	char name[MAX_SENSOR_NAME];
-	uint8_t flash_enabled;
-	uint8_t sensor_Orientation;
-	int8_t total_steps;
-	uint32_t autoexposure;
-	uint32_t effects;
-	uint32_t wb;
-	uint32_t antibanding;
-	uint32_t flash;
-	uint32_t focus;
-	uint32_t ISO;
-	uint32_t lensshade;
-	uint32_t scenemode;
-	uint32_t continuous_af;
-	uint32_t touchafaec;
-	uint32_t frame_rate_modes;
-	int8_t  max_brightness;
-	int8_t  max_contrast;
-	int8_t  max_saturation;
-	int8_t  max_sharpness;
-	int8_t  min_brightness;
-	int8_t  min_contrast;
-	int8_t  min_saturation;
-	int8_t  min_sharpness;
+    char name[MAX_SENSOR_NAME];
+    uint8_t flash_enabled;
+    uint8_t sensor_Orientation;//Div6D1-CL-Camera-SensorInfo-00+
+    int8_t total_steps;
+    //Div6D1-CL-Camera-SensorInfo-01+{
+    //Div6D1-CL-Camera-SensorInfo-02*{
+    uint32_t autoexposure;
+    uint32_t effects;
+    uint32_t wb;
+    uint32_t antibanding;
+    uint32_t flash;
+    uint32_t focus;
+    uint32_t ISO;
+    uint32_t lensshade;
+    uint32_t scenemode;
+    uint32_t continuous_af;
+    uint32_t touchafaec;
+    uint32_t frame_rate_modes;
+    //Div6D1-CL-Camera-SensorInfo-02*}
+    int8_t  max_brightness;
+    int8_t  max_contrast;
+    int8_t  max_saturation;
+    int8_t  max_sharpness;
+    int8_t  min_brightness;
+    int8_t  min_contrast;
+    int8_t  min_saturation;
+    int8_t  min_sharpness;
+    //Div6D1-CL-Camera-SensorInfo-01+}
 };
 #endif /* __LINUX_MSM_CAMERA_H */

@@ -25,7 +25,6 @@
 #include <media/msm_camera.h>
 #include <mach/gpio.h>
 #include <mach/camera.h>
-#include <linux/slab.h>
 #include "sn12m0pz.h"
 
 
@@ -493,9 +492,8 @@ static int32_t sn12m0pz_stmipid02_config(void)
 		return rc; /* CSI Mode on Data Lane 1.1 (DATA1P1, DATA1N1) */
 
 	/* Tristated Output, continuous clock, */
-	/*polarity of clock is inverted and sync signals not inverted*/
-	if (sn12m0pz_i2c_write_byte_bridge(0x28>>1, 0x0015, 0x08) < 0)
-		return rc;
+	if (sn12m0pz_i2c_write_byte_bridge(0x28>>1, 0x0015, 0x00) < 0)
+		return rc; /*polarity of clock and sync signals not inverted*/
 	if (sn12m0pz_i2c_write_byte_bridge(0x28>>1, 0x0036, 0x20) < 0)
 		return rc; /* Enable compensation macro, main camera */
 
@@ -1820,7 +1818,6 @@ static int sn12m0pz_sensor_probe(const struct msm_camera_sensor_info *info,
 	s->s_init = sn12m0pz_sensor_open_init;
 	s->s_release = sn12m0pz_sensor_release;
 	s->s_config  = sn12m0pz_sensor_config;
-	s->s_mount_angle  = 0;
 	sn12m0pz_probe_init_done(info);
 
 	return rc;

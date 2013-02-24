@@ -43,3 +43,6 @@ struct sensor_parameters {
 };
 
 extern void sensor_init_parameters(const struct msm_camera_sensor_info *data, struct sensor_parameters const *para_tbls);
+
+
+

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,7 +20,6 @@
 #include <linux/uaccess.h>
 #include <linux/fs.h>
 #include <linux/android_pmem.h>
-#include <linux/slab.h>
 #include <mach/msm_adsp.h>
 #include <mach/clk.h>
 #include <linux/delay.h>
@@ -59,7 +58,6 @@ static uint32_t extlen;
 struct mutex vfe_lock;
 static void     *vfe_syncdata;
 static uint8_t vfestopped;
-static int cnt;
 
 static struct stop_event stopevent;
 
@@ -197,10 +195,6 @@ static int vfe_7x_enable(struct camera_enable_cmd *enable)
 	else if (!strcmp(enable->name, "VFETASK"))
 		rc = msm_adsp_enable(vfe_mod);
 
-	if (!cnt) {
-		add_axi_qos();
-		cnt++;
-	}
 	return rc;
 }
 
@@ -259,9 +253,8 @@ static void vfe_7x_release(struct platform_device *pdev)
 	kfree(extdata);
 	extlen = 0;
 
-	/* Release AXI */
-	release_axi_qos();
-	cnt = 0;
+	/* set back the AXI frequency to default */
+	update_axi_qos(PM_QOS_DEFAULT_VALUE);
 }
 
 static int vfe_7x_init(struct msm_vfe_callback *presp,

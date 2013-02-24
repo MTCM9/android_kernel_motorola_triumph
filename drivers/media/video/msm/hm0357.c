@@ -1,4 +1,14 @@
-#include <linux/slab.h>
+/*
+ *     hm0357.c - Camera Sensor Config
+ *
+ *     Copyright (C) 2010 Kent Kwan <kentkwan@fihspec.com>
+ *     Copyright (C) 2008 FIH CO., Inc.
+ *
+ *     This program is free software; you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation; version 2 of the License.
+ */
+
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/i2c.h>
@@ -16,8 +26,10 @@
 
 #include "../../../arch/arm/mach-msm/smd_private.h"
 
+//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*{
 #define  HM0357_MODEL_ID_1     0x03
 #define  HM0357_MODEL_ID_2     0x57
+//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*}
 
 struct hm0357_work {
     struct work_struct work;
@@ -222,19 +234,9 @@ static int32_t hm0357_i2c_txdata(unsigned short saddr,
         },
     };
 
-    if (i2c_transfer(hm0357_client->adapter, msg, 1) < 0) {
-        printk(KERN_ERR "hm0357_msg: hm0357_i2c_txdata failed, try again!\n");
-        msleep(500);
-        printk(KERN_ERR "hm0357_msg: delay 0.5s to retry i2c.\n");
-        if (i2c_transfer(hm0357_client->adapter, msg, 1) < 0) {
-            printk(KERN_ERR "hm0357_msg: hm0357_i2c_txdata failed twice, try again.\n");
-            msleep(500);
-            printk(KERN_ERR "hm0357_msg: delay 0.5s to retry i2c.\n");
-            if (i2c_transfer(hm0357_client->adapter, msg, 1) < 0) {
-                printk(KERN_ERR "hm0357_msg: hm0357_i2c_txdata failed.\n");
-                return -EIO;
-            }
-        }
+    if (i2c_transfer(hm0357_client->adapter, msg, 1) < 0){
+        printk(KERN_ERR "hm0357_msg: hm0357_i2c_txdata failed!\n");
+        return -EIO;
     }
 
     return 0;
@@ -310,25 +312,24 @@ static long hm0357_reg_init(void)
 {
     long rc = 0;
     
-    rc = hm0357_i2c_write_table(&hm0357_regs.inittbl[0], hm0357_regs.inittbl_size);
+        rc = hm0357_i2c_write_table(&hm0357_regs.inittbl[0], hm0357_regs.inittbl_size);
 
     if (rc < 0)
         return rc;
+   
     else
     {
-        if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_270) 
+        //SW5-Multimedia-TH-Hm0357Orientation-00+{
+        if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_180) 
         {
             //Here to setting sensor orientation for HW design.
             //Preview and Snapshot orientation.
-            // Enable H flip and V flip.
-            hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x03, BYTE_LEN);
-            printk("Finish Orientation Setting %d.\n",hm0357info->sensor_Orientation);
-            printk("Reg0x0006 = 0x03.\n");	
+            hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x01, BYTE_LEN);
+            printk("Finish Orientation Setting %d.\n",hm0357info->sensor_Orientation);	
         }
-        
+        //SW5-Multimedia-TH-Hm0357Orientation-00+}
+        printk("Finish Initial Setting for hm0357.\n");
     }
-    
-    printk("Finish Initial Setting for hm0357.\n");
     
     return rc;
 }
@@ -345,7 +346,7 @@ static long hm0357_set_effect(int mode, int effect)
             printk("%s: case = CAMERA_EFFECT_COLORBAR ~~ \n", __func__);
 
             //Disable Flip and Mirror function effect test patterns.  
-            rc = hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x00, BYTE_LEN);
+            rc = hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x00, BYTE_LEN);//Div2-SW6-MM-MC-EnableColorBarEffectForHM0357-00*
             if (rc < 0)
                 return rc;
             else
@@ -353,7 +354,7 @@ static long hm0357_set_effect(int mode, int effect)
             msleep(500);
 
             //Enable test mode for color bar pattern.
-            rc = hm0357_i2c_write(hm0357_client->addr, 0x0028, 0x84, BYTE_LEN);
+            rc = hm0357_i2c_write(hm0357_client->addr, 0x0028, 0x84, BYTE_LEN);//Div2-SW6-MM-MC-EnableColorBarEffectForHM0357-00*
             if (rc < 0)
                 return rc;
             else
@@ -376,13 +377,35 @@ static long hm0357_set_sensor_mode(int mode)
     {
         case SENSOR_PREVIEW_MODE:
         {
-            printk(KERN_ERR "hm0357_msg: case SENSOR_PREVIEW_MODE.\n");
+            printk(KERN_ERR "hm0357_msg: case SENSOR_PREVIEW_MODE orientation %d.\n", hm0357info->sensor_Orientation);
+            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_270) 
+            {
+                printk(KERN_ERR "hm0356_msg: case ORIENTATION 270 REQUESTED.\n");
+            }
+            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_90) 
+            {
+                printk(KERN_ERR "hm0356_msg: case ORIENTATION 90 - MIRROR REQUESTED.\n");
+//                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x80, BYTE_LEN);
+//                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x01, BYTE_LEN);
+		  hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x08, BYTE_LEN);
+            }
+            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_180) 
+            {
+                printk(KERN_ERR "hm0356_msg: case ORIENTATION 180 REQUESTED.\n");
+                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x80, BYTE_LEN);
+            }
+            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_0) 
+            {
+                printk(KERN_ERR "hm0356_msg: case ORIENTATION 0 REQUESTED.\n");
+                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x08, BYTE_LEN);
+            }
         }
             break;
 
         case SENSOR_SNAPSHOT_MODE:
         {
-            printk(KERN_ERR "hm0357_msg: case SENSOR_SNAPSHOT_MODE.\n");
+            printk(KERN_ERR "hm0357_msg: case SENSOR_SNAPSHOT_MODE REQUEST MIRRORED.\n");
+	    hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x08, BYTE_LEN);
         }
             break;
 
@@ -391,35 +414,33 @@ static long hm0357_set_sensor_mode(int mode)
             printk(KERN_ERR "hm0357_msg: case SENSOR_RAW_SNAPSHOT_MODE.\n");
         }
             break;
-
+//Div2-SW6-MM-CL-mirrorFront-00+{
         case SENSOR_MIRROR_MODE:
         {
-            printk(KERN_ERR "hm0357_msg: case SENSOR_MIRROR_MODE.\n");
-            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_90) 
-            {
-                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x02, BYTE_LEN);
-            }
+            printk(KERN_ERR "hm0356_msg: case SENSOR_MIRROR_MODE.\n");
             if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_180) 
             {
-                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x01, BYTE_LEN);
+                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x80, BYTE_LEN);
             }
-
-            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_270) 
+            if (hm0357info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_0) 
             {
-                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x01, BYTE_LEN);
+                hm0357_i2c_write(hm0357_client->addr, 0x0006, 0x08, BYTE_LEN);
             }
 
             printk("Finish Orientation Setting %d.\n",hm0357info->sensor_Orientation);
         }
             break;
+//Div2-SW6-MM-CL-mirrorFront-00+}
 
         default:
+            printk("Invalid orientation request %d.\n",hm0357info->sensor_Orientation);
         return -EINVAL;
     }
 
     return 0;
 }
 
+//SW5-Multimedia-TH-SWStandby-00+{
 #ifdef CONFIG_HM0357_STANDBY
 int hm0357_sensor_standby(int on)
 {
@@ -440,7 +461,7 @@ int hm0357_sensor_standby(int on)
 
         /* Disable MCLK = 24MHz */
         gpio_tlmm_config(GPIO_CFG(hm0357info->MCLK_PIN, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-        rc = fih_cam_output_gpio_control(hm0357info->MCLK_PIN, "hm3057", 0);
+        rc = fih_cam_output_gpio_control(hm0357info->MCLK_PIN, "hm3056", 0);
         if (rc)
             return rc;
         printk("%s: Disable mclk\n", __func__);
@@ -449,7 +470,7 @@ int hm0357_sensor_standby(int on)
     return rc;
 }
 #endif
-
+//SW5-Multimedia-TH-SWStandby-00+}
 
 
 
@@ -457,8 +478,12 @@ int hm0357_power_on(void)
 {
     int rc;
 
+    //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*{
     if (hm0357info->mclk_sw_pin == 0xffff)
     {
+        //SW5-Multimedia-TH-hm0357PowerOn-00+{
+
+        //SW5-Multimedia-TH-SWStandby-00+{
         #ifndef CONFIG_HM0357_STANDBY
         /* 5M Pwdn Pin Pull High*/
         rc = fih_cam_output_gpio_control(hm0357info->pwdn_pin, "mt9p111", 1);
@@ -467,15 +492,8 @@ int hm0357_power_on(void)
         mdelay(1);
         printk(KERN_INFO "hm0357_power_on: 5M Pwdn Pin Pull High\n");
         #endif
+        //SW5-Multimedia-TH-SWStandby-00+}
 
-        if (hm0357info->vga_power_en_pin != 0xffff)
-        {
-            rc = fih_cam_output_gpio_control(hm0357info->vga_power_en_pin, "hm0357", 1);
-            if (rc)
-                return rc;
-        }
-        else
-        {
         /* Enable camera power*/
         rc = fih_cam_vreg_control(hm0357info->cam_vreg_vddio_id, 1800, 1);
         if (rc)
@@ -488,8 +506,6 @@ int hm0357_power_on(void)
         
         if (rc)
             return rc;
-        }
-
         mdelay(1);
         printk(KERN_INFO "hm0357_power_on: Enable camera power\n");
 
@@ -542,6 +558,7 @@ int hm0357_power_on(void)
 
         mdelay(20);	//t2	
     }
+     //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*}
 
 	return rc;
 }
@@ -550,8 +567,10 @@ int hm0357_power_off(void)
 {
 	int rc;
 
+    //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*{
     if (hm0357info->mclk_sw_pin == 0xffff)
     {
+        //SW5-Multimedia-TH-hm0357PowerOff-00+{
         /* 5M Pwdn Pin Pull Low*/
         rc = fih_cam_output_gpio_control(hm0357info->pwdn_pin, "mt9p111", 0);
         if (rc)
@@ -574,29 +593,21 @@ int hm0357_power_off(void)
         printk("%s: Disable mclk\n", __func__);
         printk(KERN_INFO "hm0357_power_off: Disable MCLK\n");
 
-        if (hm0357info->vga_power_en_pin != 0xffff)
-        {
-            rc = fih_cam_output_gpio_control(hm0357info->vga_power_en_pin, "hm0357", 0);
-            if (rc)
-                return rc;
-        }
+        /* Disable camera 2.8V power*/
+        if (hm0357info->cam_v2p8_en_pin == 0xffff )
+            rc = fih_cam_vreg_control(hm0357info->cam_vreg_acore_id, 2800, 0);
         else
-        {
-            /* Disable camera 2.8V power*/
-            if (hm0357info->cam_v2p8_en_pin == 0xffff )
-                rc = fih_cam_vreg_control(hm0357info->cam_vreg_acore_id, 2800, 0);
-            else
-                rc = fih_cam_output_gpio_control(hm0357info->cam_v2p8_en_pin, "hm0357", 0);
-            if (rc)
-                return rc;
+            rc = fih_cam_output_gpio_control(hm0357info->cam_v2p8_en_pin, "hm0357", 0);
+        if (rc)
+            return rc;
 
-            /* Disable camera 1.8V power */
-            rc = fih_cam_vreg_control(hm0357info->cam_vreg_vddio_id, 1800, 0);
-            if (rc)
-                return rc;
-        }
+        /* Disable camera 1.8V power */
+        rc = fih_cam_vreg_control(hm0357info->cam_vreg_vddio_id, 1800, 1);
+        if (rc)
+            return rc;
         printk(KERN_INFO "hm0357_power_off: Disable camera power\n");
 
+        //SW5-Multimedia-TH-hm0357PowerOff-00+}
     }
     else
     {
@@ -616,6 +627,7 @@ int hm0357_power_off(void)
         if (rc)
             return rc;	
     }
+     //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*}
 
 	return rc;
 }
@@ -624,7 +636,6 @@ static int hm0357_sensor_init_probe(const struct msm_camera_sensor_info *data)
 {
     uint16_t model_id = 0;
     int rc = 0;
-    uint16_t retry_count=0;
 
     printk("hm0357_sensor_init_probe entry.\n");
     sensor_init_parameters(data,&hm0357_parameters);
@@ -637,30 +648,16 @@ static int hm0357_sensor_init_probe(const struct msm_camera_sensor_info *data)
 
     rc = hm0357_reg_init();
     if (rc < 0)
-    {
-        do 
-        {
-            hm0357_power_off();
-            msleep(200);
-            hm0357_power_on();
-            rc = hm0357_reg_init();
-            retry_count++;
-            printk("hm0357_sensor_init_probe  retry_count = 0x%d\n", retry_count);
-        } 
-        while((rc < 0)&&(retry_count<3));
-
-        if(rc < 0)
-            goto init_probe_fail;
-    }
+        goto init_probe_fail;
 
     rc = hm0357_i2c_read(hm0357_client->addr,0x0001, &model_id, BYTE_LEN);
-    if (rc < 0 || model_id != HM0357_MODEL_ID_1)
+    if (rc < 0 || model_id != HM0357_MODEL_ID_1)//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*
         goto init_probe_fail;
 
     printk("hm0357 Chip ID high byte = 0x%x .\n", model_id);
 
     rc = hm0357_i2c_read(hm0357_client->addr,0x0002, &model_id, BYTE_LEN);
-    if (rc < 0 ||model_id != HM0357_MODEL_ID_2)
+    if (rc < 0 ||model_id != HM0357_MODEL_ID_2)//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*
         goto init_probe_fail;
 
     printk("hm0357 Chip ID low byte = 0x%x .\n", model_id);
@@ -668,7 +665,6 @@ static int hm0357_sensor_init_probe(const struct msm_camera_sensor_info *data)
     return rc;
 
 init_probe_fail:
-    hm0357_power_off();
     printk("hm0357_sensor_init_probe FAIL.\n");
     return rc;
 }
@@ -700,7 +696,6 @@ init_done:
     return rc;
 
 init_fail:
-    mutex_unlock(&hm0357_mut);
     kfree(hm0357_ctrl);
     return rc;
 }
@@ -748,7 +743,7 @@ int hm0357_sensor_release(void)
     int rc = 0;
 
     printk("hm0357_sensor_release()+++\n");
-
+    //SW5-Multimedia-TH-SWStandby-00+{
     #ifdef CONFIG_HM0357_STANDBY
     fih_cam_output_gpio_control(hm0357info->vga_pwdn_pin, "hm0357", 1);
     rc = hm0357_sensor_standby(1);
@@ -761,6 +756,8 @@ int hm0357_sensor_release(void)
     /* Disable MCLK */
     gpio_tlmm_config(GPIO_CFG(hm0357info->MCLK_PIN, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_DISABLE);
     #endif
+    //SW5-Multimedia-TH-SWStandby-00+}
+
 
     kfree(hm0357_ctrl);
     hm0357_ctrl = NULL;
@@ -831,9 +828,8 @@ static int hm0357_sensor_probe(const struct msm_camera_sensor_info *info,
         rc = -ENOTSUPP;
         goto probe_done;
     }
-
-    sensor_init_parameters(info,&hm0357_parameters);
     hm0357info = info;
+    
 
     /* Init VGA pins state */
 
@@ -843,30 +839,20 @@ static int hm0357_sensor_probe(const struct msm_camera_sensor_info *info,
     rc = fih_cam_output_gpio_control(hm0357info->mclk_sw_pin, "hm0357", 1);
     msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
     msleep(30);
-
-        if (hm0357info->vga_power_en_pin != 0xffff)
-        {
-            rc = fih_cam_output_gpio_control(hm0357info->vga_power_en_pin, "hm0357", 1);
-            if (rc)
-                goto probe_done;
-        }
-        else
-        {
     rc = fih_cam_vreg_control(hm0357info->cam_vreg_vddio_id, 1800, 1);
     if (rc)
         goto probe_done;
 
     mdelay(1); // t2    //5
 
+    //Div2-SW6-MM-MC-BringUpHM0357ForSF8Series-00*{
     if (hm0357info->cam_v2p8_en_pin == 0xffff )
         rc = fih_cam_vreg_control(hm0357info->cam_vreg_acore_id, 2800, 1);
     else
         rc = fih_cam_output_gpio_control(hm0357info->cam_v2p8_en_pin, "hm0357", 1);
-
+    //Div2-SW6-MM-MC-BringUpHM0357ForSF8Series-00*}
     if (rc)
         goto probe_done;
-        }    
-
     mdelay(1);
 
     /* Power Down Pin */
@@ -884,7 +870,7 @@ static int hm0357_sensor_probe(const struct msm_camera_sensor_info *info,
     rc = hm0357_i2c_read(hm0357_client->addr,0x0002, &model_id, BYTE_LEN);
     if (rc)
     {
-        rc=-EIO;
+        rc=-EIO;//Div2-SW6-MM-MC-BringUpHM0357ForSF8Series-00+
         goto probe_done;
     }
 
@@ -899,8 +885,6 @@ static int hm0357_sensor_probe(const struct msm_camera_sensor_info *info,
     s->s_init = hm0357_sensor_init;
     s->s_release = hm0357_sensor_release;
     s->s_config  = hm0357_sensor_config;
-    s->s_camera_type = FRONT_CAMERA_2D; 
-    s->s_mount_angle = 180;
 
 probe_done:
     hm0357_power_off();

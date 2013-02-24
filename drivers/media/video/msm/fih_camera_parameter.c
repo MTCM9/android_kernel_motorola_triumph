@@ -1,4 +1,7 @@
+
 #include "fih_camera_parameter.h"
+
+
 
 uint32_t create_sensor_parameters(unsigned int *tbl,int8_t nums)
 {
@@ -12,6 +15,7 @@ uint32_t create_sensor_parameters(unsigned int *tbl,int8_t nums)
     //printk("create_sensor_parameters para=%d\n",para);
     return para;
 }
+
 
 void sensor_init_parameters(const struct msm_camera_sensor_info *data, struct sensor_parameters const *para_tbls)
 {
@@ -36,3 +40,5 @@ void sensor_init_parameters(const struct msm_camera_sensor_info *data, struct se
     data->parameters_data->min_saturation=para_tbls->min_saturation;
     data->parameters_data->min_sharpness=para_tbls->min_sharpness;
 }
+
+

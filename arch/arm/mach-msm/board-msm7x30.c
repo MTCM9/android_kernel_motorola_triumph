@@ -161,10 +161,10 @@
 /* FIHTDC, Div2-SW2-BSP SungSCLee, HDMI { */
 #define MSM_FB_SIZE		0xA00000       ///0x500000
 /* } FIHTDC, Div2-SW2-BSP SungSCLee, HDMI */
+#define MSM_GPU_PHYS_SIZE       SZ_4M
 #define MSM_PMEM_ADSP_SIZE      0x2000000  //SW2-5-CL-Camera-720P-00*
 #define MSM_FLUID_PMEM_ADSP_SIZE	0x2800000
 #define PMEM_KERNEL_EBI1_SIZE   0x600000
-#define MSM_PMEM_AUDIO_SIZE     0x200000
 
 #define PMIC_GPIO_INT		27
 #define PMIC_VREG_WLAN_LEVEL	2900
@@ -212,12 +212,9 @@ static bool hdmi_init_done = false;
 #define PM8058_GPIO_PM_TO_SYS(pm_gpio)     (pm_gpio + NR_GPIO_IRQS)
 #define PM8058_GPIO_SYS_TO_PM(sys_gpio)    (sys_gpio - NR_GPIO_IRQS)
 
-#define PMIC_GPIO_FLASH_BOOST_ENABLE	15	/* PMIC GPIO Number 16 */
 #define PMIC_GPIO_HAP_ENABLE   16  /* PMIC GPIO Number 17 */
 
 #define HAP_LVL_SHFT_MSM_GPIO 24
-
-#define PMIC_GPIO_QUICKVX_CLK 37 /* PMIC GPIO 38 */
 
 #define	PM_FLIP_MPP 5 /* PMIC MPP 06 */
 
@@ -301,16 +298,6 @@ static int pm8058_gpios_init(void)
 #endif    
 /* } FIHTDC, Div2-SW2-BSP SungSCLee, HDMI */
 
-	struct pm8058_gpio flash_boost_enable = {
-		.direction      = PM_GPIO_DIR_OUT,
-		.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
-		.output_value   = 0,
-		.pull           = PM_GPIO_PULL_NO,
-		.vin_sel        = PM_GPIO_VIN_S3,
-		.out_strength   = PM_GPIO_STRENGTH_HIGH,
-		.function       = PM_GPIO_FUNC_2,
-	};
-
 //Div2-SW6-Conn-JC-WiFi-Init-00+{
     struct pm8058_gpio wlan_shutdown = {
 	  .direction		= PM_GPIO_DIR_OUT,
@@ -355,13 +342,6 @@ static int pm8058_gpios_init(void)
 		if (rc) {
 			pr_err("%s: PMIC GPIO %d write failed\n", __func__,
 				(PMIC_GPIO_HAP_ENABLE + 1));
-			return rc;
-		}
-		rc = pm8058_gpio_config(PMIC_GPIO_FLASH_BOOST_ENABLE,
-			&flash_boost_enable);
-		if (rc) {
-			pr_err("%s: PMIC GPIO %d write failed\n", __func__,
-				(PMIC_GPIO_FLASH_BOOST_ENABLE + 1));
 			return rc;
 		}
 	}
@@ -1247,11 +1227,6 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		I2C_BOARD_INFO("vx6953", 0x20),
 	},
 #endif
-#ifdef CONFIG_MT9E013
-	{
-		I2C_BOARD_INFO("mt9e013", 0x6C >> 2),
-	},
-#endif
 #ifdef CONFIG_SN12M0PZ
 	{
 		I2C_BOARD_INFO("sn12m0pz", 0x34 >> 1),
@@ -1265,37 +1240,44 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 };
 
 #ifdef CONFIG_MSM_CAMERA
-#define	CAM_STNDBY	143
 static uint32_t camera_off_vcm_gpio_table[] = {
 //GPIO_CFG(1, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* VCM */
 };
 
 static uint32_t camera_off_gpio_table[] = {
 	/* parallel CAMERA interfaces */
-	//GPIO_CFG(0,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* RST */
-	//GPIO_CFG(2,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT2 */
-	//GPIO_CFG(3,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT3 */
-	GPIO_CFG(0, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),
-	GPIO_CFG(4,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT4 */
-	GPIO_CFG(5,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT5 */
-	GPIO_CFG(6,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT6 */
-	GPIO_CFG(7,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT7 */
-	GPIO_CFG(8,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT8 */
-	GPIO_CFG(9,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT9 */
-	GPIO_CFG(10, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT10 */
-	GPIO_CFG(11, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT11 */
-	GPIO_CFG(12, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* PCLK */
-	GPIO_CFG(13, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* HSYNC_IN */
-	GPIO_CFG(14, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* VSYNC_IN */
-	GPIO_CFG(15, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), /* MCLK */
+    //GPIO_CFG(0,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FC PWRDWN *///Div2-SW6-MM-MC-PortingCameraFor2030FTM-00-
+    //GPIO_CFG(3,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASH *///Div2-SW6-MM-MC-PortingCameraFor2030FTM-00-
+    GPIO_CFG(4,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT4 */
+    GPIO_CFG(5,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT5 */
+    GPIO_CFG(6,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT6 */
+    GPIO_CFG(7,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT7 */
+    GPIO_CFG(8,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT8 */
+    GPIO_CFG(9,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT9 */
+    GPIO_CFG(10, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT10 */
+    GPIO_CFG(11, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT11 */
+    GPIO_CFG(12, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* PCLK */
+    GPIO_CFG(13, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* HSYNC_IN */
+    GPIO_CFG(14, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* VSYNC_IN */
+    GPIO_CFG(15, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* MCLK */
 #ifdef CONFIG_FIH_AAT1272
-	#ifdef CONFIG_FIH_PROJECT_SF4Y6
-		GPIO_CFG(30, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/
-	#else
-		GPIO_CFG(39, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/ 
+    #ifdef CONFIG_FIH_PROJECT_SF4Y6
+    	GPIO_CFG(30, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/
+    #else
+        GPIO_CFG(39, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/ 
 	#endif
 #endif
-	//GPIO_CFG(50, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* SWITCH PIN*/
+
+#ifdef CONFIG_FIH_PROJECT_FB400
+    GPIO_CFG(50, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* SWITCH PIN*/
+#endif
+//Div2-SW6-MM-MC-ImplementCameraStandbyMode-00-{
+//#ifdef CONFIG_FIH_TCM9001MD
+//GPIO_CFG(19,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FC RESET */
+//GPIO_CFG(98,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* Power Enable */
+//#endif
+//Div2-SW6-MM-MC-ImplementCameraStandbyMode-00-}
+
 };
 
 static uint32_t camera_on_vcm_gpio_table[] = {
@@ -1304,46 +1286,53 @@ static uint32_t camera_on_vcm_gpio_table[] = {
 
 static uint32_t camera_on_gpio_table[] = {
 	/* parallel CAMERA interfaces */
-	//GPIO_CFG(0,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* RST */
-	//GPIO_CFG(2,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT2 */
-	//GPIO_CFG(3,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT3 */
-	GPIO_CFG(0, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	//GPIO_CFG(1, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	//GPIO_CFG(2, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	GPIO_CFG(4,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT4 */
-	GPIO_CFG(5,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT5 */
-	GPIO_CFG(6,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT6 */
-	GPIO_CFG(7,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT7 */
-	GPIO_CFG(8,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT8 */
-	GPIO_CFG(9,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT9 */
-	GPIO_CFG(10, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT10 */
-	GPIO_CFG(11, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT11 */
-	GPIO_CFG(12, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* PCLK */
-	GPIO_CFG(13, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* HSYNC_IN */
-	GPIO_CFG(14, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* VSYNC_IN */
-	GPIO_CFG(15, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), /* MCLK */
+    //GPIO_CFG(0,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FC PWRDWN *///Div2-SW6-MM-MC-PortingCameraFor2030FTM-00-
+    //GPIO_CFG(3,  0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), /* FLASH *///Div2-SW6-MM-MC-PortingCameraFor2030FTM-00-
+    GPIO_CFG(4,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT4 */
+    GPIO_CFG(5,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT5 */
+    GPIO_CFG(6,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT6 */
+    GPIO_CFG(7,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT7 */
+    GPIO_CFG(8,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT8 */
+    GPIO_CFG(9,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT9 */
+    GPIO_CFG(10, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT10 */
+    GPIO_CFG(11, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* DAT11 */
+    GPIO_CFG(12, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* PCLK */
+    GPIO_CFG(13, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* HSYNC_IN */
+    GPIO_CFG(14, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* VSYNC_IN */
+    GPIO_CFG(15, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* MCLK */
 #ifdef CONFIG_FIH_AAT1272
+	//SW5-Multimedia-TH-MT9P111forV6-00+{
 	#ifdef CONFIG_FIH_PROJECT_SF4Y6
-		GPIO_CFG(30, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/
-	#else
-		GPIO_CFG(39, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/ 
+    	GPIO_CFG(30, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/
+    #else
+        GPIO_CFG(39, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* FLASHLED_DRV_EN PIN*/ 
 	#endif
+	//SW5-Multimedia-TH-MT9P111forV6-00+} 
 #endif
-	//GPIO_CFG(50, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* SWITCH PIN*/
+#ifdef CONFIG_FIH_PROJECT_FB400
+    GPIO_CFG(50, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* SWITCH PIN*/
+#endif
+//Div2-SW6-MM-MC-ImplementCameraStandbyMode-00-{
+//#ifdef CONFIG_FIH_TCM9001MD
+//GPIO_CFG(19,  0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), /* FC RESET */
+//GPIO_CFG(98,  0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), /* Power Enable */
+//#endif
+//Div2-SW6-MM-MC-ImplementCameraStandbyMode-00-}
+
 };
 
 static uint32_t camera_off_gpio_fluid_table[] = {
 	/* FLUID: CAM_VGA_RST_N */
 	GPIO_CFG(31, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	/* FLUID: CAMIF_STANDBY */
-	GPIO_CFG(CAM_STNDBY, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
+	/* FLUID: Disable CAMIF_STANDBY */
+	GPIO_CFG(143, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
 };
 
 static uint32_t camera_on_gpio_fluid_table[] = {
 	/* FLUID: CAM_VGA_RST_N */
 	GPIO_CFG(31, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	/* FLUID: CAMIF_STANDBY */
-	GPIO_CFG(CAM_STNDBY, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
+	/* FLUID: Disable CAMIF_STANDBY */
+	GPIO_CFG(143, 1, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA)
 };
 
 static void config_gpio_table(uint32_t *table, int len)
@@ -1358,7 +1347,7 @@ static void config_gpio_table(uint32_t *table, int len)
 		}
 	}
 }
-static int config_camera_on_gpios(void)
+static void config_camera_on_gpios(void)
 {
 	config_gpio_table(camera_on_gpio_table,
 		ARRAY_SIZE(camera_on_gpio_table));
@@ -1372,13 +1361,7 @@ static int config_camera_on_gpios(void)
 	if (machine_is_msm7x30_fluid()) {
 		config_gpio_table(camera_on_gpio_fluid_table,
 			ARRAY_SIZE(camera_on_gpio_fluid_table));
-		/* FLUID: turn on 5V booster */
-		gpio_set_value(
-			PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_FLASH_BOOST_ENABLE), 1);
-		/* FLUID: drive high to put secondary sensor to STANDBY */
-		gpio_set_value(CAM_STNDBY, 1);
 	}
-	return 0;
 }
 
 static void config_camera_off_gpios(void)
@@ -1395,9 +1378,6 @@ static void config_camera_off_gpios(void)
 	if (machine_is_msm7x30_fluid()) {
 		config_gpio_table(camera_off_gpio_fluid_table,
 			ARRAY_SIZE(camera_off_gpio_fluid_table));
-		/* FLUID: turn off 5V booster */
-		gpio_set_value(
-			PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_FLASH_BOOST_ENABLE), 0);
 	}
 }
 
@@ -1412,9 +1392,6 @@ struct resource msm_camera_resources[] = {
 		.end	= INT_VFE,
 		.flags	= IORESOURCE_IRQ,
 	},
-	{
-		.flags  = IORESOURCE_DMA,
-	}
 };
 
 struct msm_camera_device_platform_data msm_camera_device_data = {
@@ -1429,7 +1406,7 @@ struct msm_camera_device_platform_data msm_camera_device_data = {
 	.ioclk.vfe_clk_rate  = 122880000,
 };
 
-static struct msm_camera_sensor_flash_src msm_flash_src_pwm = {
+static struct msm_camera_sensor_flash_src msm_flash_src = {
 	.flash_sr_type = MSM_CAMERA_FLASH_SRC_PWM,
 	._fsrc.pwm_src.freq  = 1000,
 	._fsrc.pwm_src.max_load = 300,
@@ -1437,11 +1414,11 @@ static struct msm_camera_sensor_flash_src msm_flash_src_pwm = {
 	._fsrc.pwm_src.high_load = 100,
 	._fsrc.pwm_src.channel = 7,
 };
-
+//Div2-SW6-MM-HL-Camera-BringUp-00+{
 #ifdef CONFIG_FIH_MT9P111
 static struct msm_camera_sensor_flash_data flash_mt9p111 = {
-	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm
+    .flash_type = MSM_CAMERA_FLASH_LED,
+    .flash_src  = &msm_flash_src
 };
 //Div6D1-CL-Camera-SensorInfo-01+{
 static struct msm_parameters_data parameters_mt9p111 = {
@@ -1479,16 +1456,19 @@ static struct msm_camera_sensor_info msm_camera_sensor_mt9p111_data = {
     .cam_vreg_vddio_id = "NoVreg",
     .cam_vreg_acore_id = "NoVreg",
 
-	/* Flash LED setting */
-	.flash_target_addr = 0xffff,
-	.flash_target = 0xffff,
-	.flash_bright = 0xffff,
-	.flash_main_waittime = 0,
-	.flash_main_starttime = 0,
-	.flash_second_waittime = 0,
-	.preflash_light = 0x31,
-	.torch_light = 0x34,
-	.fast_af_retest_target = 0xffff
+    //SW5-Multimedia-TH-FlashModeSetting-01+{
+    /* Flash LED setting */
+    .flash_target_addr = 0xffff,//Div2-SW6-MM-MC-FixCameraCurrentLeakage-02+
+    .flash_target = 0xffff,
+    .flash_bright = 0xffff,
+    .flash_main_waittime = 0,
+    .flash_main_starttime = 0,
+    .flash_second_waittime = 0,
+    //SW5-Multimedia-TH-FlashModeSetting-01+}
+
+    //SW5-Multimedia-TH-MT9P111ReAFTest-00+{
+    .fast_af_retest_target = 0xffff
+    //SW5-Multimedia-TH-MT9P111ReAFTest-00+}
 };
 
 static struct platform_device msm_camera_sensor_mt9p111 = {
@@ -1501,8 +1481,8 @@ static struct platform_device msm_camera_sensor_mt9p111 = {
 
 #ifdef CONFIG_FIH_HM0356
 static struct msm_camera_sensor_flash_data flash_hm0356 = {
-	.flash_type = MSM_CAMERA_FLASH_NONE,
-	.flash_src  = &msm_flash_src_pwm
+    .flash_type = MSM_CAMERA_FLASH_LED,
+    .flash_src  = &msm_flash_src
 };
 //Div6D1-CL-Camera-SensorInfo-01+{
 static struct msm_parameters_data parameters_hm0356 = {
@@ -1548,8 +1528,8 @@ static struct platform_device msm_camera_sensor_hm0356 = {
 //Div2-SW6-MM-HL-Camera-BringUp-00+}
 #ifdef CONFIG_FIH_HM0357
 static struct msm_camera_sensor_flash_data flash_hm0357 = {
-	.flash_type = MSM_CAMERA_FLASH_NONE,
-	.flash_src  = &msm_flash_src_pwm
+    .flash_type = MSM_CAMERA_FLASH_LED,
+    .flash_src  = &msm_flash_src
 };
 
 static struct msm_parameters_data parameters_hm0357 = {
@@ -1596,8 +1576,8 @@ static struct platform_device msm_camera_sensor_hm0357 = {
 //Div2-SW6-MM-MC-Camera-BringUpForSF5-00+{
 #ifdef CONFIG_FIH_TCM9001MD
 static struct msm_camera_sensor_flash_data flash_tcm9001md = {
-	.flash_type = MSM_CAMERA_FLASH_NONE,
-	.flash_src  = &msm_flash_src_pwm
+	.flash_type = MSM_CAMERA_FLASH_LED,
+	.flash_src  = &msm_flash_src
 };
 
 //Div2-SW6-MM-MC-BringUpFrontCameraForOS-00+{
@@ -1609,7 +1589,6 @@ static struct msm_camera_sensor_info msm_camera_sensor_tcm9001md_data = {
 	.sensor_name    = "tcm9001md",
 	.sensor_reset   = 19,
 	.sensor_pwd     = 0,
-	.sensor_Orientation = MSM_CAMERA_SENSOR_ORIENTATION_0,
 	.pdata          = &msm_camera_device_data,
 	.resource       = msm_camera_resources,
 	.num_resources  = ARRAY_SIZE(msm_camera_resources),
@@ -1647,7 +1626,7 @@ static struct platform_device msm_camera_sensor_tcm9001md = {
 #ifdef CONFIG_MT9D112
 static struct msm_camera_sensor_flash_data flash_mt9d112 = {
 	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm
+	.flash_src  = &msm_flash_src
 };
 
 static struct msm_camera_sensor_info msm_camera_sensor_mt9d112_data = {
@@ -1674,7 +1653,7 @@ static struct platform_device msm_camera_sensor_mt9d112 = {
 #ifdef CONFIG_S5K3E2FX
 static struct msm_camera_sensor_flash_data flash_s5k3e2fx = {
 	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm,
+	.flash_src  = &msm_flash_src
 };
 
 static struct msm_camera_sensor_info msm_camera_sensor_s5k3e2fx_data = {
@@ -1701,7 +1680,7 @@ static struct platform_device msm_camera_sensor_s5k3e2fx = {
 #ifdef CONFIG_MT9P012
 static struct msm_camera_sensor_flash_data flash_mt9p012 = {
 	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm
+	.flash_src  = &msm_flash_src
 };
 
 static struct msm_camera_sensor_info msm_camera_sensor_mt9p012_data = {
@@ -1724,38 +1703,10 @@ static struct platform_device msm_camera_sensor_mt9p012 = {
 	},
 };
 #endif
-
-#ifdef CONFIG_MT9E013
-static struct msm_camera_sensor_flash_data flash_mt9e013 = {
-	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm
-};
-
-static struct msm_camera_sensor_info msm_camera_sensor_mt9e013_data = {
-	.sensor_name    = "mt9e013",
-	.sensor_reset   = 0,
-	.sensor_pwd     = 85,
-	.vcm_pwd        = 1,
-	.vcm_enable     = 1,
-	.pdata          = &msm_camera_device_data,
-	.resource       = msm_camera_resources,
-	.num_resources  = ARRAY_SIZE(msm_camera_resources),
-	.flash_data     = &flash_mt9e013,
-	.csi_if         = 1
-};
-
-static struct platform_device msm_camera_sensor_mt9e013 = {
-	.name      = "msm_camera_mt9e013",
-	.dev       = {
-		.platform_data = &msm_camera_sensor_mt9e013_data,
-	},
-};
-#endif
-
 #ifdef CONFIG_VX6953
 static struct msm_camera_sensor_flash_data flash_vx6953 = {
 	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm
+	.flash_src  = &msm_flash_src
 };
 static struct msm_camera_sensor_info msm_camera_sensor_vx6953_data = {
 	.sensor_name    = "vx6953",
@@ -1778,18 +1729,9 @@ static struct platform_device msm_camera_sensor_vx6953 = {
 #endif
 
 #ifdef CONFIG_SN12M0PZ
-static struct msm_camera_sensor_flash_src msm_flash_src_current_driver = {
-	.flash_sr_type = MSM_CAMERA_FLASH_SRC_CURRENT_DRIVER,
-	._fsrc.current_driver_src.low_current = 210,
-	._fsrc.current_driver_src.high_current = 700,
-#ifdef CONFIG_LEDS_PMIC8058
-	._fsrc.current_driver_src.driver_channel = &pm8058_fluid_leds_data,
-#endif
-};
-
 static struct msm_camera_sensor_flash_data flash_sn12m0pz = {
 	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_current_driver
+	.flash_src  = &msm_flash_src
 };
 static struct msm_camera_sensor_info msm_camera_sensor_sn12m0pz_data = {
 	.sensor_name    = "sn12m0pz",
@@ -1815,7 +1757,7 @@ static struct platform_device msm_camera_sensor_sn12m0pz = {
 #ifdef CONFIG_MT9T013
 static struct msm_camera_sensor_flash_data flash_mt9t013 = {
 	.flash_type = MSM_CAMERA_FLASH_LED,
-	.flash_src  = &msm_flash_src_pwm
+	.flash_src  = &msm_flash_src
 };
 
 static struct msm_camera_sensor_info msm_camera_sensor_mt9t013_data = {
@@ -2012,11 +1954,6 @@ void camera_sensor_hwpin_init(void)
             msm_camera_sensor_mt9p111_data.flash_main_starttime = 90;
             msm_camera_sensor_mt9p111_data.flash_main_waittime = 700;
         }
-        if(pid ==Product_FB3 )
-        {
-            msm_camera_sensor_mt9p111_data.torch_light = 0x3E;
-            msm_camera_sensor_mt9p111_data.preflash_light=0x3E;
-        }
     }
 
 #endif
@@ -2078,7 +2015,6 @@ void camera_sensor_hwpin_init(void)
             msm_camera_sensor_hm0357_data.vga_pwdn_pin = 174;
         }
         
-        msm_camera_sensor_hm0357_data.sensor_Orientation = MSM_CAMERA_SENSOR_ORIENTATION_270,
         msm_camera_sensor_hm0357_data.pwdn_pin = 2;
         msm_camera_sensor_hm0357_data.mclk_sw_pin = 0xffff;
 
@@ -2095,13 +2031,6 @@ void camera_sensor_hwpin_init(void)
         msm_camera_sensor_hm0357_data.vga_pwdn_pin = 0;
         msm_camera_sensor_hm0357_data.cam_vreg_vddio_id = "gp7";
         msm_camera_sensor_hm0357_data.cam_vreg_acore_id = "gp10";
-    }
-    else if (pid == Product_SF5)
-    {
-        msm_camera_sensor_hm0357_data.rst_pin = 120;
-        msm_camera_sensor_hm0357_data.pwdn_pin = 2;
-        msm_camera_sensor_hm0357_data.vga_pwdn_pin = 0;
-        msm_camera_sensor_hm0357_data.vga_power_en_pin = 98;
     }
     else// For FBx and FDx series project
     {
@@ -2395,10 +2324,6 @@ static struct msm_gpio mi2s_clk_gpios[] = {
 	    "MI2S_SCLK"},
 	{ GPIO_CFG(144, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
 	    "MI2S_WS"},
-};
-
-//SW4-L1-HL-Camera-FixCameraCrashAfterOpenFM-00+{
-static struct msm_gpio mi2s_mclk_gpios[] = {
 	{ GPIO_CFG(120, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
 	    "MI2S_MCLK_A"},
 };
@@ -2432,19 +2357,6 @@ int mi2s_config_clk_gpio(void)
 					__func__);
 		return rc;
 	}
-
-	//SW4-L1-HL-Camera-FixCameraCrashAfterOpenFM-00+{
-	if ((fih_get_product_id() != Product_SF5))
-	{
-		rc = msm_gpios_request_enable(mi2s_mclk_gpios,
-				ARRAY_SIZE(mi2s_mclk_gpios));
-		if (rc) {
-			pr_err("%s: enable mi2s clk gpios  failed\n",
-						__func__);
-			return rc;
-		}
-	}	
-	//SW4-L1-HL-Camera-FixCameraCrashAfterOpenFM-00+}	
 }
 //MM-RC-ChangeFMPath-00*}
 	return 0;
@@ -2535,14 +2447,7 @@ int mi2s_unconfig_clk_gpio(void)
  //MM-RC-ChangeFMPath-00*{
  if(!IS_SF8_SERIES_PRJ()){
 	msm_gpios_disable_free(mi2s_clk_gpios, ARRAY_SIZE(mi2s_clk_gpios));
-
-	 //SW4-L1-HL-Camera-FixCameraCrashAfterOpenFM-00+{
-	 if ((fih_get_product_id() != Product_SF5))
-	 {
-		msm_gpios_disable_free(mi2s_mclk_gpios, ARRAY_SIZE(mi2s_mclk_gpios));		
-	 }
-	 //SW4-L1-HL-Camera-FixCameraCrashAfterOpenFM-00+} 
- } 	
+ }
   //MM-RC-ChangeFMPath-00*}
 	return 0;
 }
@@ -3782,6 +3687,7 @@ static struct android_usb_product usb_products[] = {
 #endif
 //Div6-D1-JL-UsbPidVid-02+}
 
+
 static struct usb_mass_storage_platform_data mass_storage_pdata = {
 //Div2D5-LC-BSP-Implement_Dual_SD_Card-00 *[
 #ifdef CONFIG_FIH_SF5_DUAL_SD_CARD
@@ -4177,11 +4083,6 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 //Div2D5-OwenHuang-SF8_Sensor_Porting-00+}
 
 //Div2-SW2-BSP-Touch, Vincent +
-#ifdef CONFIG_FIH_TOUCHSCREEN_INNOLUX
-    {
-        I2C_BOARD_INFO("innolux_ts", 0x09),
-    },
-#endif
 #ifdef CONFIG_FIH_TOUCHSCREEN_BU21018MWV
     {
         I2C_BOARD_INFO("bu21018mwv", 0x5C),
@@ -5064,8 +4965,6 @@ static int msm_fb_detect_panel(const char *name)
 			return 0;
 		else if (!strcmp(name, "mddi_orise"))
 			return -EPERM;
-		else if (!strcmp(name, "mddi_quickvx"))
-			return -EPERM;
 	}
 	return -ENODEV;
 }
@@ -5107,12 +5006,6 @@ static struct android_pmem_platform_data android_pmem_adsp_pdata = {
        .cached = 0,
 };
 
-static struct android_pmem_platform_data android_pmem_audio_pdata = {
-       .name = "pmem_audio",
-       .allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
-       .cached = 0,
-};
-
 static struct platform_device android_pmem_kernel_ebi1_device = {
        .name = "android_pmem",
        .id = 1,
@@ -5123,12 +5016,6 @@ static struct platform_device android_pmem_adsp_device = {
        .name = "android_pmem",
        .id = 2,
        .dev = { .platform_data = &android_pmem_adsp_pdata },
-};
-
-static struct platform_device android_pmem_audio_device = {
-       .name = "android_pmem",
-       .id = 4,
-       .dev = { .platform_data = &android_pmem_audio_pdata },
 };
 
 struct resource kgsl_3d0_resources[] = {
@@ -5456,23 +5343,6 @@ static int display_common_power(int on)
 
 }
 
-static unsigned char quickvx_mddi_client = 1;
-
-#if 0
-static unsigned quickvx_vlp_gpio =
-	GPIO_CFG(97, 0, GPIO_CFG_OUTPUT,  GPIO_CFG_NO_PULL,	GPIO_CFG_2MA);
-
-static struct pm8058_gpio pmic_quickvx_clk_gpio = {
-	.direction      = PM_GPIO_DIR_OUT,
-	.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
-	.output_value   = 1,
-	.pull           = PM_GPIO_PULL_NO,
-	.vin_sel        = PM_GPIO_VIN_S3,
-	.out_strength   = PM_GPIO_STRENGTH_HIGH,
-	.function       = PM_GPIO_FUNC_2,
-};
-#endif
-
 #else // CONFIG_FIH_LCDC_TOSHIBA_WVGA_PT 
 //SW2-6-MM-JH-Unused_Display_Codes-00+
 #if 0
@@ -5506,32 +5376,6 @@ static int display_common_power(int on)
 
 		/* bring reset line low to hold reset*/
 		gpio_set_value(180, 0);
-
-		if (quickvx_mddi_client) {
-			/* QuickVX chip -- VLP pin -- gpio 97 */
-			rc = gpio_tlmm_config(quickvx_vlp_gpio,
-				GPIO_CFG_ENABLE);
-			if (rc) {
-				pr_err("%s: gpio_tlmm_config(%#x)=%d\n",
-					__func__, quickvx_vlp_gpio, rc);
-				return rc;
-			}
-
-			/* bring QuickVX VLP line low */
-			gpio_set_value(97, 0);
-
-			rc = pm8058_gpio_config(PMIC_GPIO_QUICKVX_CLK,
-				&pmic_quickvx_clk_gpio);
-			if (rc) {
-				pr_err("%s: pm8058_gpio_config(%#x)=%d\n",
-					__func__, PMIC_GPIO_QUICKVX_CLK + 1,
-					rc);
-				return rc;
-			}
-
-			gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(
-				PMIC_GPIO_QUICKVX_CLK), 0);
-		}
 	}
 
 	/* Toshiba WeGA power -- has 3 power source */
@@ -5588,12 +5432,7 @@ static int display_common_power(int on)
 		}
 	}
 
-	/* For QuickLogic chip, LDO20 requires 1.8V */
-	/* Toshiba chip requires 1.5V, but can tolerate 1.8V since max is 3V */
-	if (quickvx_mddi_client)
-		rc = vreg_set_level(vreg_ldo20, 1800);
-	else
-		rc = vreg_set_level(vreg_ldo20, 1500);
+	rc = vreg_set_level(vreg_ldo20, 1500);
 	if (rc) {
 		pr_err("%s: vreg LDO20 set level failed (%d)\n",
 		       __func__, rc);
@@ -5687,15 +5526,6 @@ static int display_common_power(int on)
 
 		gpio_set_value(180, 1); /* bring reset line high */
 		mdelay(10);	/* 10 msec before IO can be accessed */
-
-		if (quickvx_mddi_client) {
-			gpio_set_value(97, 1);
-			msleep(2);
-			gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(
-				PMIC_GPIO_QUICKVX_CLK), 1);
-			msleep(2);
-		}
-
 		rc = pmapp_display_clock_config(1);
 		if (rc) {
 			pr_err("%s pmapp_display_clock_config rc=%d\n",
@@ -5720,12 +5550,6 @@ static int display_common_power(int on)
 		}
 
 		gpio_set_value(180, 0); /* bring reset line low */
-
-		if (quickvx_mddi_client) {
-			gpio_set_value(97, 0);
-			gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(
-				PMIC_GPIO_QUICKVX_CLK), 0);
-		}
 
 		if (machine_is_msm7x30_fluid()) {
 			rc = vreg_disable(vreg_ldo8);
@@ -5779,46 +5603,11 @@ static int msm_fb_mddi_sel_clk(u32 *clk_rate)
 	return 0;
 }
 
-static int msm_fb_mddi_client_power(u32 client_id)
-{
-	struct vreg *vreg_ldo20;
-	int rc;
-
-	printk(KERN_NOTICE "\n client_id = 0x%x", client_id);
-	/* Check if it is Quicklogic client */
-	if (client_id == 0xc5835800)
-		printk(KERN_NOTICE "\n Quicklogic MDDI client");
-	else {
-		printk(KERN_NOTICE "\n Non-Quicklogic MDDI client");
-		quickvx_mddi_client = 0;
-		gpio_set_value(97, 0);
-		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(
-			PMIC_GPIO_QUICKVX_CLK), 0);
-
-		vreg_ldo20 = vreg_get(NULL, "gp13");
-
-		if (IS_ERR(vreg_ldo20)) {
-			rc = PTR_ERR(vreg_ldo20);
-			pr_err("%s: gp13 vreg get failed (%d)\n",
-				   __func__, rc);
-			return rc;
-		}
-		rc = vreg_set_level(vreg_ldo20, 1500);
-		if (rc) {
-			pr_err("%s: vreg LDO20 set level failed (%d)\n",
-			       __func__, rc);
-			return rc;
-		}
-	}
-	return 0;
-}
-
 static struct mddi_platform_data mddi_pdata = {
 #ifndef CONFIG_FIH_CONFIG_GROUP
 	.mddi_power_save = display_common_power,
 #endif
 	.mddi_sel_clk = msm_fb_mddi_sel_clk,
-	.mddi_client_power = msm_fb_mddi_client_power,
 };
 #endif // CONFIG_FB_MSM_MDDI
 //SW2-6-MM-JH-Display_Flag-00-
@@ -6112,7 +5901,6 @@ static int lcdc_panel_power(int on)
 		return 0;
 
 	lcdc_power_save_on = flag_on;
-	quickvx_mddi_client = 0;
 
 //SW2-6-MM-JH-Unused_Display_Codes-00+
 #if 0
@@ -6213,9 +6001,6 @@ static void __init msm_fb_add_devices(void)
 	msm_fb_register_device("dtv", &dtv_pdata);
 #endif	
 	msm_fb_register_device("tvenc", &atv_pdata);
-#ifdef CONFIG_FB_MSM_TVOUT
-	msm_fb_register_device("tvout_device", NULL);
-#endif
 }
 
 //SW2-6-MM-JH-Display_Flag-00+
@@ -7285,7 +7070,6 @@ static struct platform_device *devices[] __initdata = {
 /* } FIHTDC, Div2-SW2-BSP SungSCLee, HDMI */  
 	&android_pmem_kernel_ebi1_device,
 	&android_pmem_adsp_device,
-	&android_pmem_audio_device,
 	&msm_device_i2c,
 	&msm_device_i2c_2,
 	&msm_device_uart_dm1,
@@ -7349,9 +7133,6 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #ifdef CONFIG_MT9P012
 	&msm_camera_sensor_mt9p012,
-#endif
-#ifdef CONFIG_MT9E013
-	&msm_camera_sensor_mt9e013,
 #endif
 #ifdef CONFIG_VX6953
 	&msm_camera_sensor_vx6953,
@@ -9767,6 +9548,13 @@ static void __init fb_size_setup(char **p)
 }
 __early_param("fb_size=", fb_size_setup);
 
+static unsigned gpu_phys_size = MSM_GPU_PHYS_SIZE;
+static void __init gpu_phys_size_setup(char **p)
+{
+	gpu_phys_size = memparse(*p, p);
+}
+__early_param("gpu_phys_size=", gpu_phys_size_setup);
+
 static unsigned pmem_adsp_size = MSM_PMEM_ADSP_SIZE;
 static void __init pmem_adsp_size_setup(char **p)
 {
@@ -9780,14 +9568,6 @@ static void __init fluid_pmem_adsp_size_setup(char **p)
 	fluid_pmem_adsp_size = memparse(*p, p);
 }
 __early_param("fluid_pmem_adsp_size=", fluid_pmem_adsp_size_setup);
-
-static unsigned pmem_audio_size = MSM_PMEM_AUDIO_SIZE;
-static int __init pmem_audio_size_setup(char *p)
-{
-	pmem_audio_size = memparse(p, NULL);
-	return 0;
-}
-early_param("pmem_audio_size", pmem_audio_size_setup);
 
 static unsigned pmem_kernel_ebi1_size = PMEM_KERNEL_EBI1_SIZE;
 static void __init pmem_kernel_ebi1_size_setup(char **p)
@@ -9819,16 +9599,17 @@ static void __init msm7x30_allocate_memory_regions(void)
 	msm_fb_resources[0].end = msm_fb_resources[0].start + size - 1;
 	pr_info("allocating %lu bytes at %p (%lx physical) for fb\n",
 		size, addr, __pa(addr));
-
-	size = pmem_audio_size;
+	
+/*
+	size = gpu_phys_size;
 	if (size) {
 		addr = alloc_bootmem(size);
-		android_pmem_audio_pdata.start = __pa(addr);
-		android_pmem_audio_pdata.size = size;
-		pr_info("allocating %lu bytes at %p (%lx physical) for audio "
-			"pmem arena\n", size, addr, __pa(addr));
+		kgsl_resources[1].start = __pa(addr);
+		kgsl_resources[1].end = kgsl_resources[1].start + size - 1;
+		pr_info("allocating %lu bytes at %p (%lx physical) for "
+			"KGSL\n", size, addr, __pa(addr));
 	}
-
+*/
 	size = pmem_kernel_ebi1_size;
 	if (size) {
 		addr = alloc_bootmem_aligned(size, 0x100000);

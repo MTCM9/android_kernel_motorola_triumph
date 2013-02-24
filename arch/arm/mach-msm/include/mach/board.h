@@ -22,7 +22,6 @@
 #include <linux/input.h>
 #include <linux/usb.h>
 #include <linux/leds-pmic8058.h>
-#include <mach/msm_bus.h>
 
 /* platform device data structures */
 struct msm_acpu_clock_platform_data {
@@ -52,7 +51,7 @@ struct msm_camera_io_clk {
 };
 
 struct msm_camera_device_platform_data {
-	int (*camera_gpio_on) (void);
+	void (*camera_gpio_on) (void);
 	void (*camera_gpio_off)(void);
 	struct msm_camera_io_ext ioext;
 	struct msm_camera_io_clk ioclk;
@@ -85,7 +84,6 @@ struct msm_camera_legacy_device_platform_data {
 
 #define MSM_CAMERA_FLASH_SRC_PMIC (0x00000001<<0)
 #define MSM_CAMERA_FLASH_SRC_PWM  (0x00000001<<1)
-#define MSM_CAMERA_FLASH_SRC_CURRENT_DRIVER	(0x00000001<<2)
 //Div6D1-CL-Camera-SensorInfo-00+{
 #define MSM_CAMERA_SENSOR_ORIENTATION_0 0
 #define MSM_CAMERA_SENSOR_ORIENTATION_90 1
@@ -109,21 +107,12 @@ struct msm_camera_sensor_flash_pwm {
 	uint32_t channel;
 };
 
-struct pmic8058_leds_platform_data;
-struct msm_camera_sensor_flash_current_driver {
-	uint32_t low_current;
-	uint32_t high_current;
-	const struct pmic8058_leds_platform_data *driver_channel;
-};
-
 struct msm_camera_sensor_flash_src {
 	int flash_sr_type;
 
 	union {
 		struct msm_camera_sensor_flash_pmic pmic_src;
 		struct msm_camera_sensor_flash_pwm pwm_src;
-		struct msm_camera_sensor_flash_current_driver
-			current_driver_src;
 	} _fsrc;
 };
 
@@ -131,102 +120,93 @@ struct msm_camera_sensor_flash_data {
 	int flash_type;
 	struct msm_camera_sensor_flash_src *flash_src;
 };
-
+//Div6D1-CL-Camera-SensorInfo-01+{
 #define MAX_SENSOR_PARAMETERS 256
 
 struct msm_parameters_data {
-	uint32_t autoexposure;
-	uint32_t effects;
-	uint32_t wb;
-	uint32_t antibanding;
-	uint32_t flash;
-	uint32_t focus;
-	uint32_t ISO;
-	uint32_t lensshade;
-	uint32_t scenemode;
-	uint32_t continuous_af;
-	uint32_t touchafaec;
-	uint32_t frame_rate_modes;
-	int8_t  max_brightness;
-	int8_t  max_contrast;
-	int8_t  max_saturation;
-	int8_t  max_sharpness;
-	int8_t  min_brightness;
-	int8_t  min_contrast;
-	int8_t  min_saturation;
-	int8_t  min_sharpness;
-};
+    //Div6D1-CL-Camera-SensorInfo-02*{
+    uint32_t autoexposure;
+    uint32_t effects;
+    uint32_t wb;
+    uint32_t antibanding;
+    uint32_t flash;
+    uint32_t focus;
+    uint32_t ISO;
+    uint32_t lensshade;
+    uint32_t scenemode;
+    uint32_t continuous_af;
+    uint32_t touchafaec;
+    uint32_t frame_rate_modes;
+    //Div6D1-CL-Camera-SensorInfo-02*}
+    int8_t  max_brightness;
+    int8_t  max_contrast;
+    int8_t  max_saturation;
+    int8_t  max_sharpness;
+    int8_t  min_brightness;
+    int8_t  min_contrast;
+    int8_t  min_saturation;
+    int8_t  min_sharpness;
 
+};
+//Div6D1-CL-Camera-SensorInfo-01+}
 struct msm_camera_sensor_strobe_flash_data {
-	uint8_t flash_trigger;
-	uint8_t flash_charge; /* pin for charge */
-	uint8_t flash_charge_done;
+	int flash_charge; /* pin for charge */
 	uint32_t flash_recharge_duration;
 	uint32_t irq;
 	spinlock_t spin_lock;
 	spinlock_t timer_lock;
-	int state;
-};
-
-enum camera_vreg_type {
-	REG_LDO,
-	REG_VS,
-};
-
-struct camera_vreg_t {
-	char *reg_name;
-	enum camera_vreg_type type;
-	int min_voltage;
-	int max_voltage;
-	int op_mode;
 };
 
 struct msm_camera_sensor_info {
-	const char *sensor_name;
-	int sensor_reset;
-	int sensor_pwd;
-	int sensor_Orientation;
-	int vcm_pwd;
-	int vcm_enable;
-	int mclk;
-	int flash_type;
+        const char *sensor_name;
+        int sensor_reset;
+        int sensor_pwd;
+        int sensor_Orientation;//Div6D1-CL-Camera-SensorInfo-00+
+        int vcm_pwd;
+        int vcm_enable;
+        int mclk;
+        int flash_type;
 
-	/* Declare for camea pins */
-	int MCLK_PIN;
-	int mclk_sw_pin;
-	int pwdn_pin;
-	int rst_pin;
-	int standby_pin;
-	int vga_pwdn_pin;
-	int vga_rst_pin;
-	int vga_power_en_pin;
-	int GPIO_FLASHLED;
-	int GPIO_FLASHLED_DRV_EN;
+        /* Declare for camea pins */
+        int MCLK_PIN;
+        int mclk_sw_pin;
+        int pwdn_pin;
+        int rst_pin;
+        int standby_pin;
+        int vga_pwdn_pin;
+        int vga_rst_pin;
+        int vga_power_en_pin;
+        int GPIO_FLASHLED;
+        int GPIO_FLASHLED_DRV_EN;
 
-	/* Declare for camera power */
-	int AF_pmic_en_pin;
-	int cam_v2p8_en_pin;
-	const char *cam_vreg_vddio_id;
-	const char *cam_vreg_acore_id;
-
-	/* Flash LED setting */
-	int flash_target_addr;
-	int flash_target;
-	int flash_bright;
-	int flash_main_waittime;
-	int flash_main_starttime;
-	int flash_second_waittime;
-	int preflash_light;
-	int fast_af_retest_target;
-	int torch_light;
-	struct msm_camera_device_platform_data *pdata;
-	struct resource *resource;
-	uint8_t num_resources;
-	struct msm_camera_sensor_flash_data *flash_data;
-	int csi_if;
-	struct msm_camera_csi_params csi_params;
-	struct msm_camera_sensor_strobe_flash_data *strobe_flash_data;
-	struct msm_parameters_data *parameters_data;
+        /* Declare for camera power */
+        int AF_pmic_en_pin;
+        int cam_v2p8_en_pin;
+        const char *cam_vreg_vddio_id;
+        const char *cam_vreg_acore_id;
+        
+        //SW5-Multimedia-TH-FlashModeSetting-01+{
+        /* Flash LED setting */
+        int flash_target_addr;
+        int flash_target;
+        int flash_bright;
+        int flash_main_waittime;
+        int flash_main_starttime;
+        int flash_second_waittime;
+        //SW5-Multimedia-TH-FlashModeSetting-01+}
+        
+        //SW5-Multimedia-TH-MT9P111ReAFTest-00+{
+        int fast_af_retest_target;
+        //SW5-Multimedia-TH-MT9P111ReAFTest-00+}
+        
+        struct msm_camera_device_platform_data *pdata;
+        struct resource *resource;
+        uint8_t num_resources;
+        struct msm_camera_sensor_flash_data *flash_data;
+        int csi_if;
+        struct msm_camera_csi_params csi_params;
+        struct msm_camera_sensor_strobe_flash_data *strobe_flash_data;
+        struct msm_parameters_data *parameters_data;//Div6D1-CL-Camera-SensorInfo-01+
 };
 
 struct clk;

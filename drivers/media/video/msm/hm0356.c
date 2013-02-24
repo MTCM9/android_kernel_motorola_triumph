@@ -1,4 +1,14 @@
-#include <linux/slab.h>
+/*
+ *     hm0356.c - Camera Sensor Config
+ *
+ *     Copyright (C) 2010 Kent Kwan <kentkwan@fihspec.com>
+ *     Copyright (C) 2008 FIH CO., Inc.
+ *
+ *     This program is free software; you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation; version 2 of the License.
+ */
+
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/i2c.h>
@@ -16,8 +26,11 @@
 
 #include "../../../arch/arm/mach-msm/smd_private.h"
 
+//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*{
 #define  HM0356_MODEL_ID_1     0x03
 #define  HM0356_MODEL_ID_2     0x56
+//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*}
+
 /*  SOC Registers Page 1  */
 #define  REG_hm0356_SENSOR_RESET     0x001A
 #define  REG_hm0356_STANDBY_CONTROL  0x0018
@@ -214,19 +227,9 @@ static int32_t hm0356_i2c_txdata(unsigned short saddr,
         },
     };
 
-    if (i2c_transfer(hm0356_client->adapter, msg, 1) < 0) {
-        printk(KERN_ERR "hm0356_msg: hm0356_i2c_txdata failed, try again!\n");
-        msleep(500);
-        printk(KERN_ERR "hm0356_msg: delay 0.5s to retry i2c.\n");
-        if (i2c_transfer(hm0356_client->adapter, msg, 1) < 0) {
-            printk(KERN_ERR "hm0356_msg: hm0356_i2c_txdata failed twice, try again.\n");
-            msleep(500);
-            printk(KERN_ERR "hm0356_msg: delay 0.5s to retry i2c.\n");
-            if (i2c_transfer(hm0356_client->adapter, msg, 1) < 0) {
-                printk(KERN_ERR "hm0356_msg: hm0356_i2c_txdata failed.\n");
-                return -EIO;
-            }
-        }
+    if (i2c_transfer(hm0356_client->adapter, msg, 1) < 0){
+        printk(KERN_ERR "hm0356_msg: hm0356_i2c_txdata failed\n");
+        return -EIO;
     }
 
     return 0;
@@ -294,12 +297,19 @@ static long hm0356_reg_init(void)
     long rc = 0;
 
     rc = hm0356_i2c_write_table(&hm0356_regs.inittbl[0], hm0356_regs.inittbl_size);
-    
     if (rc < 0)
         return rc;
     else
+    {
+        if (hm0356info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_180) 
+        {
+            //Here to setting sensor orientation for HW design.
+            //Preview and Snapshot orientation.
+            hm0356_i2c_write(hm0356_client->addr, 0x0006, 0x80, FC_BYTE_LEN);
+            printk("Finish Orientation Setting.\n");	
+        }
         printk("Finish Initial Setting for HM0356.\n");
-    
+    }
     return rc;
 }
 
@@ -362,22 +372,6 @@ static long hm0356_set_sensor_mode(int mode)
         }
             break;
 
-        case SENSOR_MIRROR_MODE:
-        {
-            printk(KERN_ERR "hm0356_msg: case SENSOR_MIRROR_MODE.\n");
-            if (hm0356info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_180) 
-            {
-                hm0356_i2c_write(hm0356_client->addr, 0x0006, 0x80, FC_BYTE_LEN);
-            }
-            if (hm0356info->sensor_Orientation == MSM_CAMERA_SENSOR_ORIENTATION_0) 
-            {
-                hm0356_i2c_write(hm0356_client->addr, 0x0006, 0x08, FC_BYTE_LEN);
-            }
-
-            printk("Finish Orientation Setting %d.\n",hm0356info->sensor_Orientation);
-        }
-            break;
-
         default:
         return -EINVAL;
     }
@@ -385,6 +379,7 @@ static long hm0356_set_sensor_mode(int mode)
     return 0;
 }
 
+//SW5-Multimedia-TH-SWStandby-00+{
 #ifdef CONFIG_HM0356_STANDBY
 int hm0356_sensor_standby(int on)
 {
@@ -414,13 +409,18 @@ int hm0356_sensor_standby(int on)
     return rc;
 }
 #endif
+//SW5-Multimedia-TH-SWStandby-00+}
 
 int hm0356_power_on(void)
 {
     int rc;
 
+    //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*{
     if (hm0356info->mclk_sw_pin == 0xffff)
     {
+        //SW5-Multimedia-TH-hm0356PowerOn-00+{
+
+        //SW5-Multimedia-TH-SWStandby-00+{
         #ifndef CONFIG_HM0356_STANDBY
         /* 5M Pwdn Pin Pull High*/
         rc = fih_cam_output_gpio_control(hm0356info->pwdn_pin, "mt9p111", 1);
@@ -429,6 +429,7 @@ int hm0356_power_on(void)
         mdelay(1);
         printk(KERN_INFO "hm0356_power_on: 5M Pwdn Pin Pull High\n");
         #endif
+        //SW5-Multimedia-TH-SWStandby-00+}
 
         /* Enable camera power*/
         rc = fih_cam_vreg_control(hm0356info->cam_vreg_vddio_id, 1800, 1);
@@ -464,7 +465,7 @@ int hm0356_power_on(void)
         if (rc)
             return rc;
         printk(KERN_INFO "hm0356_power_on:  VGA Pwdn Pin Pull Low\n");
-
+        //SW5-Multimedia-TH-hm0356PowerOn-00+}
     }
     else
     {	
@@ -493,16 +494,19 @@ int hm0356_power_on(void)
 
         mdelay(2);	//t2	
     }
+     //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*}
 
 	return rc;
 }
 
 int hm0356_power_off(void)
 {
-    int rc;
+	int rc;
 
+    //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*{
     if (hm0356info->mclk_sw_pin == 0xffff)
     {
+        //SW5-Multimedia-TH-hm0356PowerOff-00+{
         /* 5M Pwdn Pin Pull Low*/
         rc = fih_cam_output_gpio_control(hm0356info->pwdn_pin, "mt9p111", 0);
         if (rc)
@@ -534,11 +538,12 @@ int hm0356_power_off(void)
             return rc;
 
         /* Disable camera 1.8V power */
-        rc = fih_cam_vreg_control(hm0356info->cam_vreg_vddio_id, 1800, 0);
+        rc = fih_cam_vreg_control(hm0356info->cam_vreg_vddio_id, 1800, 1);
         if (rc)
             return rc;
         printk(KERN_INFO "hm0356_power_off: Disable camera power\n");
 
+        //SW5-Multimedia-TH-hm0356PowerOff-00+{
     }
     else
     {
@@ -558,6 +563,7 @@ int hm0356_power_off(void)
         if (rc)
             return rc;	
     }
+     //Div2-SW6-MM-MC-PortingCameraDriverForSF8-00*}
 
 	return rc;
 }
@@ -566,7 +572,6 @@ static int hm0356_sensor_init_probe(const struct msm_camera_sensor_info *data)
 {
     uint16_t model_id = 0;
     int rc = 0;
-    uint16_t retry_count=0;
 
     printk("hm0356_sensor_init_probe entry.\n");
     sensor_init_parameters(data,&hm0356_parameters);
@@ -580,30 +585,16 @@ static int hm0356_sensor_init_probe(const struct msm_camera_sensor_info *data)
 
     rc = hm0356_reg_init();
     if (rc < 0)
-    {
-        do 
-        {
-            hm0356_power_off();
-            msleep(200);
-            hm0356_power_on();
-            rc = hm0356_reg_init();
-            retry_count++;
-            printk("hm0356_sensor_init_probe  retry_count = 0x%d\n", retry_count);
-        } 
-        while((rc < 0)&&(retry_count<3));
-
-        if(rc < 0)
-            goto init_probe_fail;
-    }
+        goto init_probe_fail;
 
     rc = hm0356_i2c_read(hm0356_client->addr,0x0001, &model_id, FC_BYTE_LEN);
-    if (rc < 0 || model_id != HM0356_MODEL_ID_1)
+    if (rc < 0 || model_id != HM0356_MODEL_ID_1)//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*
         goto init_probe_fail;
 
     printk("HM0356 Chip ID high byte = 0x%x .\n", model_id);
 
     rc = hm0356_i2c_read(hm0356_client->addr,0x0002, &model_id, FC_BYTE_LEN);
-    if (rc < 0 || model_id != HM0356_MODEL_ID_2)
+    if (rc < 0 || model_id != HM0356_MODEL_ID_2)//Div2-SW6-MM-MC-ImplementCameraFTMforSF8Serials-00*
         goto init_probe_fail;
 
     printk("HM0356 Chip ID low byte = 0x%x .\n", model_id);
@@ -611,7 +602,6 @@ static int hm0356_sensor_init_probe(const struct msm_camera_sensor_info *data)
     return rc;
 
 init_probe_fail:
-    hm0356_power_off();
     printk("hm0356_sensor_init_probe FAIL.\n");
     return rc;
 }
@@ -643,7 +633,6 @@ init_done:
     return rc;
 
 init_fail:
-    mutex_unlock(&hm0356_mut);
     kfree(hm0356_ctrl);
     return rc;
 }
@@ -693,6 +682,7 @@ int hm0356_sensor_release(void)
 
     printk("hm0356_sensor_release()+++\n");
 
+    //SW5-Multimedia-TH-SWStandby-00+{
     #ifdef CONFIG_HM0356_STANDBY
     fih_cam_output_gpio_control(hm0356info->vga_pwdn_pin, "hm0356", 1);
     rc = hm0356_sensor_standby(1);
@@ -707,6 +697,7 @@ int hm0356_sensor_release(void)
     /* Disable MCLK */
     gpio_tlmm_config(GPIO_CFG(hm0356info->MCLK_PIN, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_DISABLE);
     #endif
+    //SW5-Multimedia-TH-SWStandby-00+}
 
     kfree(hm0356_ctrl);
     hm0356_ctrl = NULL;
@@ -777,9 +768,8 @@ static int hm0356_sensor_probe(const struct msm_camera_sensor_info *info,
         rc = -ENOTSUPP;
         goto probe_done;
     }
-    sensor_init_parameters(info,&hm0356_parameters);
     hm0356info = info;
-#if 1
+
     /* Init VGA pins state */
 
     rc = fih_cam_output_gpio_control(hm0356info->vga_pwdn_pin, "hm0356", 0);
@@ -825,12 +815,10 @@ static int hm0356_sensor_probe(const struct msm_camera_sensor_info *info,
         rc=-1;
         goto probe_done;
     }
-#endif
+
     s->s_init = hm0356_sensor_init;
     s->s_release = hm0356_sensor_release;
     s->s_config  = hm0356_sensor_config;
-    s->s_camera_type = FRONT_CAMERA_2D; 
-    s->s_mount_angle = 180;
 
 probe_done:
     hm0356_power_off();

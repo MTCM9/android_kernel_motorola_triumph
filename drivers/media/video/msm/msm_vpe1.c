@@ -20,7 +20,6 @@
 #include <linux/interrupt.h>
 #include <mach/irqs.h>
 #include <linux/io.h>
-#include <linux/slab.h>
 #include "msm_vpe1.h"
 #include <mach/msm_reqs.h>
 #include <linux/pm_qos_params.h>
@@ -32,21 +31,6 @@ static int vpe_update_scaler(struct video_crop_t *pcrop);
 static struct vpe_device_type  vpe_device_data;
 static struct vpe_device_type  *vpe_device;
 struct vpe_ctrl_type    *vpe_ctrl;
-char *vpe_general_cmd[] = {
-	"VPE_DUMMY_0",  /* 0 */
-	"VPE_SET_CLK",
-	"VPE_RESET",
-	"VPE_START",
-	"VPE_ABORT",
-	"VPE_OPERATION_MODE_CFG",  /* 5 */
-	"VPE_INPUT_PLANE_CFG",
-	"VPE_OUTPUT_PLANE_CFG",
-	"VPE_INPUT_PLANE_UPDATE",
-	"VPE_SCALE_CFG_TYPE",
-	"VPE_ROTATION_CFG_TYPE",  /* 10 */
-	"VPE_AXI_OUT_CFG",
-	"VPE_CMD_DIS_OFFSET_CFG",
-};
 
 #define CHECKED_COPY_FROM_USER(in) {					\
 	if (copy_from_user((in), (void __user *)cmd->value,		\
@@ -729,8 +713,8 @@ static int vpe_proc_general(struct msm_vpe_cmd *cmd)
 	struct msm_queue_cmd *qcmd = NULL;
 	struct msm_vpe_buf_info *vpe_buf;
 	struct msm_sync *sync = (struct msm_sync *)vpe_ctrl->syncdata;
-	CDBG("vpe_proc_general: cmdID = %s, length = %d\n",
-		vpe_general_cmd[cmd->id], cmd->length);
+	CDBG("vpe_proc_general: cmdID = %d, length = %d\n",
+		cmd->id, cmd->length);
 	switch (cmd->id) {
 	case VPE_RESET:
 	case VPE_ABORT:
@@ -822,7 +806,6 @@ static int vpe_proc_general(struct msm_vpe_cmd *cmd)
 		qcmd = msm_dequeue_vpe(&sync->vpe_q, list_vpe_frame);
 		if (!qcmd) {
 			pr_err("%s: no video frame.\n", __func__);
-			kfree(cmdp);
 			return -EAGAIN;
 		}
 		vdata = (struct msm_vfe_resp *)(qcmd->command);
@@ -833,10 +816,8 @@ static int vpe_proc_general(struct msm_vpe_cmd *cmd)
 		msm_send_frame_to_vpe(vpe_buf->y_phy, vpe_buf->cbcr_phy,
 						&(vpe_buf->ts));
 
-		if (!qcmd || !atomic_read(&qcmd->on_heap)) {
-			kfree(cmdp);
+		if (!qcmd || !atomic_read(&qcmd->on_heap))
 			return -EAGAIN;
-		}
 		if (!atomic_sub_return(1, &qcmd->on_heap))
 			kfree(qcmd);
 		break;
@@ -959,10 +940,12 @@ int msm_vpe_config(struct msm_vpe_cfg_cmd *cmd, void *data)
 
 	case CMD_AXI_CFG_VPE: {
 		struct axidata *axid;
+		uint32_t *axio = NULL;
 		axid = data;
 		if (!axid)
 			return -EFAULT;
 		vpe_config_axi(axid);
+		kfree(axio);
 		break;
 	}
 	default:
@@ -1047,7 +1030,6 @@ static void vpe_do_tasklet(unsigned long data)
 		vpe_send_outmsg(MSG_ID_VPE_OUTPUT_V, pyaddr, pcbcraddr);
 		vpe_ctrl->state = 0;   /* put it back to idle. */
 	}
-	kfree(qcmd);
 }
 DECLARE_TASKLET(vpe_tasklet, vpe_do_tasklet, 0);
 
@@ -1133,14 +1115,13 @@ int msm_vpe_release(void)
 	/* don't change the order of clock and irq.*/
 	int rc = 0;
 
-	pr_info("%s: In\n", __func__);
+	CDBG("%s: In \n", __func__);
 
 	free_irq(vpe_device->vpeirq, 0);
-	tasklet_kill(&vpe_tasklet);
 	rc = msm_camio_vpe_clk_disable();
 	kfree(vpe_ctrl);
 
-	pr_info("%s: Out\n", __func__);
+	CDBG("%s: Out \n", __func__);
 	return rc;
 }
 

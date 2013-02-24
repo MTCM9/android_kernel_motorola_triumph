@@ -1,3 +1,14 @@
+/*
+ *     mt9p111_reg.c - Camera Sensor Config
+ *
+ *     Copyright (C) 2010 Kent Kwan <kentkwan@fihspec.com>
+ *     Copyright (C) 2008 FIH CO., Inc.
+ *
+ *     This program is free software; you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation; version 2 of the License.
+ */
+
 #include "mt9p111.h"
 
 struct mt9p111_i2c_reg_conf const init_tbl[] = {
@@ -45,10 +56,10 @@ struct mt9p111_i2c_reg_conf const init_tbl[] = {
     {0xC858, 0x0003 , WORD_LEN, 0 },	// CAM_CORE_A_COARSE_ITMIN
     {0xC8B8, 0x0004 , WORD_LEN, 0 },	// CAM_OUTPUT_0_JPEG_CONTROL
     {0xC8AE, 0x0001, WORD_LEN, 0 }, 	// CAM_OUTPUT_0_OUTPUT_FORMAT
-    {0xC8AA, 0x0500 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_WIDTH
-    {0xC8AC, 0x03C0 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_HEIGHT
-    //{0xC8AA, 0x0280 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_WIDTH
-    //{0xC8AC, 0x01E0 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_HEIGHT
+    {0xC8AA, 0x0500 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_WIDTH//Div6D1-CL-Camera-D1_WVGA-05*
+    {0xC8AC, 0x03C0 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_HEIGHT//Div6D1-CL-Camera-D1_WVGA-05*
+    //{0xC8AA, 0x0280 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_WIDTH//Div6D1-CL-Camera-D1_WVGA-05*
+    //{0xC8AC, 0x01E0 , WORD_LEN, 0 },	// CAM_OUTPUT_0_IMAGE_HEIGHT//Div6D1-CL-Camera-D1_WVGA-05*
     {0xC872, 0x0010 , WORD_LEN, 0 },	// CAM_CORE_B_Y_ADDR_START
     {0xC874, 0x001C , WORD_LEN, 0 },	// CAM_CORE_B_X_ADDR_START
     {0xC876, 0x07AF , WORD_LEN, 0 },	// CAM_CORE_B_Y_ADDR_END
@@ -100,6 +111,65 @@ struct mt9p111_i2c_reg_conf const init_tbl[] = {
     {0x8417, 0x02 , BYTE_LEN, 0 },	// SEQ_STATE_CFG_1_FD
     {0x8404, 0x06, BYTE_LEN, 0 },  // SEQ_CMD
     {0x060E, 0xFF, BYTE_LEN, 0 },//set vgpio down
+};
+
+struct mt9p111_i2c_reg_conf const hd_init_tbl[] = {
+    {0x098E, 0x843C , WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS [CAM_CORE_A_Y_ADDR_START]
+    {0x843C, 0x01 , BYTE_LEN, 0 },// SEQ_STATE_CFG_5_MAX_FRAME_CNT
+    {0x8404, 0x01, BYTE_LEN, 0 }, // SEQ_CMD
+    {0x0016, 0x0447 , WORD_LEN, 0 }, // CLOCKS_CONTROL
+    {0xC83A, 0x0106 , WORD_LEN, 0 }, // CAM_CORE_A_Y_ADDR_START
+    {0xC83C, 0x0018 , WORD_LEN, 0 }, // CAM_CORE_A_X_ADDR_START
+    {0xC83E, 0x06B7 , WORD_LEN, 0 }, // CAM_CORE_A_Y_ADDR_END
+    {0xC840, 0x0A45 , WORD_LEN, 0 }, // CAM_CORE_A_X_ADDR_END
+    {0xC86C, 0x0518  , WORD_LEN, 0 },// CAM_CORE_A_OUTPUT_SIZE_WIDTH
+    {0xC86E, 0x02D8  , WORD_LEN, 0 },// CAM_CORE_A_OUTPUT_SIZE_HEIGHT
+    {0xC870, 0x0014  , WORD_LEN, 0 },// CAM_CORE_A_RX_FIFO_TRIGGER_MARK
+    {0xC858, 0x0003 , WORD_LEN, 0 },// CAM_CORE_A_COARSE_ITMIN
+    {0xC8B8, 0x0004 , WORD_LEN, 0 }, // CAM_OUTPUT_0_JPEG_CONTROL
+    {0xC8AA, 0x0500 , WORD_LEN, 0 }, // CAM_OUTPUT_0_IMAGE_WIDTH
+    {0xC8AC, 0x02D0 , WORD_LEN, 0 }, // CAM_OUTPUT_0_IMAGE_HEIGHT
+    {0xC8AE, 0x0001 , WORD_LEN, 0 }, // CAM_OUTPUT_0_OUTPUT_FORMAT
+    { 0x8404, 0x06, BYTE_LEN, 0 },  // SEQ_CMD
+};
+
+struct mt9p111_i2c_reg_conf const hd_to_vga_tbl[] = {
+    {0xC83A, 0x000C  , WORD_LEN, 0 },   // CAM_CORE_A_Y_ADDR_START
+    {0xC83C, 0x0018 , WORD_LEN, 0 },    // CAM_CORE_A_X_ADDR_START
+    {0xC83E, 0x07B1 , WORD_LEN, 0 },    // CAM_CORE_A_Y_ADDR_END
+    {0xC840, 0x0A45 , WORD_LEN, 0 },    // CAM_CORE_A_X_ADDR_END
+    {0xC868, 0x0423 , WORD_LEN, 0 },    // CAM_CORE_A_FRAME_LENGTH_LINES
+    {0xC86A, 0x1194 , WORD_LEN, 0 },    // CAM_CORE_A_LINE_LENGTH_PCK
+    {0xC86C, 0x0518 , WORD_LEN, 0 },    // CAM_CORE_A_OUTPUT_SIZE_WIDTH
+    {0xC86E, 0x03D4 , WORD_LEN, 0 },    // CAM_CORE_A_OUTPUT_SIZE_HEIGHT
+    {0xC870, 0x0014  , WORD_LEN, 0 },// CAM_CORE_A_RX_FIFO_TRIGGER_MARK
+    {0xC858, 0x0003 , WORD_LEN, 0 }, // CAM_CORE_A_COARSE_ITMIN
+    {0xC8A4, 0x0A28 , WORD_LEN, 0 },    // CAM_CORE_B_OUTPUT_SIZE_WIDTH
+    {0xC8A6, 0x07A0 , WORD_LEN, 0 },    // CAM_CORE_B_OUTPUT_SIZE_HEIGHT
+    {0xC8AA, 0x0280 , WORD_LEN, 0 },    // CAM_OUTPUT_0_IMAGE_WIDTH
+    {0xC8AC, 0x01E0 , WORD_LEN, 0 },    // CAM_OUTPUT_0_IMAGE_HEIGHT
+    {0xC8AE, 0x0001 , WORD_LEN, 0 },    // CAM_OUTPUT_0_OUTPUT_FORMAT
+    { 0x8404, 0x06, BYTE_LEN, 0 },  // SEQ_CMD 
+};
+
+struct mt9p111_i2c_reg_conf const d1_init_tbl[] = {
+    { 0xC83A, 0x012C, WORD_LEN, 0 },  // CAM_CORE_A_Y_ADDR_START
+    { 0xC83E, 0x07EF, WORD_LEN, 0 },  // CAM_CORE_A_Y_ADDR_END
+    { 0xC86E, 0x02C7, WORD_LEN, 0 },  // CAM_CORE_A_OUTPUT_SIZE_HEIGHT
+    { 0xC8AA, 0x02D0, WORD_LEN, 0 },  // CAM_OUTPUT_0_IMAGE_WIDTH                  (720)
+    { 0xC8AC, 0x01E0, WORD_LEN, 0 },  // CAM_OUTPUT_0_IMAGE_HEIGHT     (480)
+    { 0xDC0A, 0x0E, BYTE_LEN, 0 },      // SYS_SCALE_MODE
+    { 0x8404, 0x06, BYTE_LEN, 0 },        // SEQ_CMD//Div6D1-CL-Camera-D1_WVGA-03*//Div6D1-CL-Camera-SnapShotFail-00*
+};
+
+struct mt9p111_i2c_reg_conf const wvga_init_tbl[] = {
+    { 0xC83A, 0x012C, WORD_LEN, 0 },  // CAM_CORE_A_Y_ADDR_START
+    { 0xC83E, 0x07EF, WORD_LEN, 0 },  // CAM_CORE_A_Y_ADDR_END
+    { 0xC86E, 0x02C7, WORD_LEN, 0 },  // CAM_CORE_A_OUTPUT_SIZE_HEIGHT
+    { 0xC8AA, 0x0320, WORD_LEN, 0 },  // CAM_OUTPUT_0_IMAGE_WIDTH                   (800)
+    { 0xC8AC, 0x01E0, WORD_LEN, 0 },  // CAM_OUTPUT_0_IMAGE_HEIGHT     (480)
+    { 0xDC0A, 0x0E, BYTE_LEN, 0 },  // SYS_SCALE_MODE
+    { 0x8404, 0x06, BYTE_LEN, 0 },  // SEQ_CMD//Div6D1-CL-Camera-D1_WVGA-03*//Div6D1-CL-Camera-SnapShotFail-00*
 };
 
 struct mt9p111_i2c_reg_conf const yellow_light_tbl[] = {                                                             
@@ -424,13 +494,13 @@ static struct mt9p111_i2c_reg_conf const lc_tbl[] = {
 };
 
 static const struct mt9p111_i2c_reg_conf const otp_outdoor_daylight_tbl[] = {
-	{ 0xAC9A, 0x78, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_0
-	{ 0xAC9C, 0x7A, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_2
+	{ 0xAC9A, 0x72, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_0
+	{ 0xAC9C, 0x7E, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_2
 };
 
 static const struct mt9p111_i2c_reg_conf const otp_tbl[] = {
 	{ 0xAC9A, 0x7B, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_0
-    { 0xAC9C, 0x7A, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_2
+    { 0xAC9C, 0x82, BYTE_LEN, 0 },// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_2
 };
 
 static struct mt9p111_i2c_reg_conf const iq_tbl[] = {
@@ -450,7 +520,7 @@ static struct mt9p111_i2c_reg_conf const iq_tbl[] = {
 	{ 0xAC43, 0x66, BYTE_LEN, 0 },	// AWB_MAX_ACCEPTED_POST_AWB_B2G_RATIO
 	//awb_patch
 	{ 0xACB0, 0x31, BYTE_LEN, 0 },	// AWB_RG_MIN
-	{ 0xACB1, 0x60, BYTE_LEN, 0 },	// AWB_RG_MAX
+	{ 0xACB1, 0x5B, BYTE_LEN, 0 },	// AWB_RG_MAX
 	{ 0xACB4, 0x2A, BYTE_LEN, 0 },	// AWB_BG_MIN
 	{ 0xACB5, 0x5B, BYTE_LEN, 0 },	// AWB_BG_MAX
 	{ 0xACB2, 0x3C, BYTE_LEN, 0 },	// AWB_RG_MIN_BRIGHT
@@ -464,15 +534,15 @@ static struct mt9p111_i2c_reg_conf const iq_tbl[] = {
 	{ 0xAC09, 0x01, BYTE_LEN, 0 },	// AWB_MODE_EX	 ??? not sure is WORD_LEN or BYTE_LEN
 	{ 0xAC22, 0x0000, WORD_LEN, 0 },	// AWB_SHARPNESS_TH   ??? not sure is WORD_LEN or BYTE_LEN 
     //soc5140_ccm_settings: from 0816 KI
-	{ 0xAC46, 0x01DB, WORD_LEN, 0 },	// AWB_LEFT_CCM_0
-	{ 0xAC48, 0xFFA9, WORD_LEN, 0 },	// AWB_LEFT_CCM_1
-	{ 0xAC4A, 0xFF7C, WORD_LEN, 0 },	// AWB_LEFT_CCM_2
-	{ 0xAC4C, 0xFFB6, WORD_LEN, 0 },	// AWB_LEFT_CCM_3
-	{ 0xAC4E, 0x012C, WORD_LEN, 0 },	// AWB_LEFT_CCM_4
-	{ 0xAC50, 0x001E, WORD_LEN, 0 },	// AWB_LEFT_CCM_5
-	{ 0xAC52, 0xFFBF, WORD_LEN, 0 },	// AWB_LEFT_CCM_6
-	{ 0xAC54, 0xFDFE, WORD_LEN, 0 },	// AWB_LEFT_CCM_7
-	{ 0xAC56, 0x0343, WORD_LEN, 0 },	// AWB_LEFT_CCM_8
+	{ 0xAC46, 0x01C4, WORD_LEN, 0 },	// AWB_LEFT_CCM_0
+	{ 0xAC48, 0xFF7A, WORD_LEN, 0 },	// AWB_LEFT_CCM_1
+	{ 0xAC4A, 0xFFC2, WORD_LEN, 0 },	// AWB_LEFT_CCM_2
+	{ 0xAC4C, 0xFFA6, WORD_LEN, 0 },	// AWB_LEFT_CCM_3
+	{ 0xAC4E, 0x018F, WORD_LEN, 0 },	// AWB_LEFT_CCM_4
+	{ 0xAC50, 0xFFCB, WORD_LEN, 0 },	// AWB_LEFT_CCM_5
+	{ 0xAC52, 0xFFE9, WORD_LEN, 0 },	// AWB_LEFT_CCM_6
+	{ 0xAC54, 0xFF63, WORD_LEN, 0 },	// AWB_LEFT_CCM_7
+	{ 0xAC56, 0x01B4, WORD_LEN, 0 },	// AWB_LEFT_CCM_8
 	{ 0xAC58, 0x00C6, WORD_LEN, 0 },	// AWB_LEFT_CCM_R2BRATIO
 	{ 0xAC5C, 0x01E8, WORD_LEN, 0 },	// AWB_RIGHT_CCM_0
 	{ 0xAC5E, 0xFF5C, WORD_LEN, 0 },	// AWB_RIGHT_CCM_1
@@ -494,12 +564,12 @@ static struct mt9p111_i2c_reg_conf const iq_tbl[] = {
 	{ 0xAC80, 0x0096, WORD_LEN, 0 },	// AWB_LL_CCM_7
 	{ 0xAC82, 0x001D, WORD_LEN, 0 },	// AWB_LL_CCM_8
 	{ 0xAC96, 0x10 , BYTE_LEN, 0 },	// AWB_TINT_TH
-	{ 0xAC97, 0x65 , BYTE_LEN, 0 },	// AWB_LEFT_TINT_COEF_FOR_CCM_ROW_0
-	{ 0xAC98, 0x80 , BYTE_LEN, 0 }, // AWB_LEFT_TINT_COEF_FOR_CCM_ROW_1
-	{ 0xAC99, 0x79 , BYTE_LEN, 0 },	// AWB_LEFT_TINT_COEF_FOR_CCM_ROW_2
+	{ 0xAC97, 0x58 , BYTE_LEN, 0 },	// AWB_LEFT_TINT_COEF_FOR_CCM_ROW_0
+	{ 0xAC98, 0x8C , BYTE_LEN, 0 }, // AWB_LEFT_TINT_COEF_FOR_CCM_ROW_1
+	{ 0xAC99, 0x80 , BYTE_LEN, 0 },	// AWB_LEFT_TINT_COEF_FOR_CCM_ROW_2
 	{ 0xAC9A, 0x7B , BYTE_LEN, 0 },	// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_0
 	{ 0xAC9B, 0x80 , BYTE_LEN, 0 },	// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_1
-	{ 0xAC9C, 0x7A , BYTE_LEN, 0 },	// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_2
+	{ 0xAC9C, 0x82 , BYTE_LEN, 0 },	// AWB_RIGHT_TINT_COEF_FOR_CCM_ROW_2
 	{ 0xB83E, 0x10 , BYTE_LEN, 0 },	// STAT_AWB_WINDOW_POS_X
 	{ 0xB83F, 0x10 , BYTE_LEN, 0 },	// STAT_AWB_WINDOW_POS_Y
 	{ 0xB840, 0xDF , BYTE_LEN, 0 },	// STAT_AWB_WINDOW_SIZE_X
@@ -603,7 +673,7 @@ static struct mt9p111_i2c_reg_conf const iq_tbl[] = {
 	{ 0xB863, 0x02, BYTE_LEN, 0 },	// STAT_BM_MUL
 	{ 0xB827, 0x0F, BYTE_LEN, 0 },	// STAT_AE_EV_SHIFT
 	//{ 0xA409, 0x4A, BYTE_LEN, 0 },	// AE_RULE_BASE_TARGET
-	{ 0xA409, 0x40, BYTE_LEN, 0 },	// 134
+	{ 0xA409, 0x42, BYTE_LEN, 0 },	// 134
 	{ 0xA805, 0x06, BYTE_LEN, 0 },	// AE_TRACK_GATE   ??? not sure is WORD_LEN or BYTE_LEN
 	{ 0xA80D, 0x08, BYTE_LEN, 0 },
 	{ 0xA816, 0x0002, WORD_LEN, 0 },	// AE_TRACK_MIN_INT_TIME_ROWS
@@ -721,7 +791,7 @@ static struct mt9p111_i2c_reg_conf const iq_tbl[] = {
 	//manual_FD
 	{ 0x8417, 0x01, BYTE_LEN, 0 },	// SEQ_STATE_CFG_1_FD
 	//tx_setting
-	{ 0xC8ED, 0x00, BYTE_LEN, 0 },	// CAM_TX_ENABLE_MODE Context A,B time
+	{ 0xC8ED, 0x03, BYTE_LEN, 0 },	// CAM_TX_ENABLE_MODE Context A,B time
 	{ 0x8419, 0x04 , BYTE_LEN, 0 },	// SEQ_STATE_CFG_1_AF
 	{ 0x3EDA, 0x6060, WORD_LEN, 0 },	  // DAC_LD_14_15
 	{ 0x8404, 0x06 , BYTE_LEN, 300 },	// SEQ_CMD
@@ -872,7 +942,7 @@ static struct mt9p111_i2c_reg_conf const char_tbl[] = {
 	{ 0x897C, 0x1984, WORD_LEN, 0 },
 	{ 0x897E, 0x0000, WORD_LEN, 0 },
 	{ 0x8980, 0xD0BF, WORD_LEN, 0 },
-	{ 0x8982, 0x1988, WORD_LEN, 0 }, 
+	{ 0x8982, 0x1988, WORD_LEN, 0 },
 	{ 0x8984, 0x0000, WORD_LEN, 0 },
 	{ 0x8986, 0xD0BF, WORD_LEN, 0 },
 	{ 0x8988, 0x198C, WORD_LEN, 0 },
@@ -1807,31 +1877,30 @@ static struct mt9p111_i2c_reg_conf const char_tbl[] = {
 	{ 0x3E1A, 0xA582, WORD_LEN, 0 },  // SAMP_TX_BOOST
 	{ 0x3E2E, 0xEC05, WORD_LEN, 0 },  // SAMP_SPARE
 	{ 0x3EE6, 0xA5C0, WORD_LEN, 0 },  // DAC_LD_26_27
-	{ 0x316C, 0xF43F, WORD_LEN, 0 },  // DAC_TXLO
+	{ 0x316C, 0xB43F, WORD_LEN, 0 },  // DAC_TXLO
 	{ 0x316E, 0xC6FF, WORD_LEN, 0 },  // DAC_ECL
 };    
 
 static const struct mt9p111_i2c_reg_conf const AF_setting[] = {
-	{ 0x098E, 0xB018, WORD_LEN, 0 },	// LOGICAL_ADDRESS_ACCESS [AFM_ALGO]
+	{ 0x098E, 0xC400, WORD_LEN, 0 },	// LOGICAL_ADDRESS_ACCESS [AFM_ALGO]
 	{ 0xC400, 0x88, BYTE_LEN, 0 },  // AFM_ALGO
-	{ 0xC40A, 0x0010, WORD_LEN, 0 },  // AFM_POS_MIN
-	{ 0xC40C, 0x00E8, WORD_LEN, 0 },  // AFM_POS_MAX
+	{ 0xC40A, 0x0048, WORD_LEN, 0 },  // AFM_POS_MIN
+	{ 0xC40C, 0x00E0, WORD_LEN, 0 },  // AFM_POS_MAX
 	{ 0xC402, 0x00, BYTE_LEN, 0 },  // AFM_MODE
-	{ 0xB045, 0x0015, WORD_LEN, 0 },  // AF_MODE_EX
-	{ 0xB854, 0x66, BYTE_LEN, 0 },  // STAT_SM_WINDOW_POS_X
-	{ 0xB855, 0x66, BYTE_LEN, 0 },  // STAT_SM_WINDOW_POS_Y
-	{ 0xB856, 0x33, BYTE_LEN, 0 },  // STAT_SM_WINDOW_SIZE_X
-	{ 0xB857, 0x33, BYTE_LEN, 0 },  // STAT_SM_WINDOW_SIZE_Y
+	{ 0xB854, 0x52, BYTE_LEN, 0 },  // STAT_SM_WINDOW_POS_X
+	{ 0xB855, 0x58, BYTE_LEN, 0 },  // STAT_SM_WINDOW_POS_Y
+	{ 0xB856, 0x5D, BYTE_LEN, 0 },  // STAT_SM_WINDOW_SIZE_X
+	{ 0xB857, 0x5A, BYTE_LEN, 0 },  // STAT_SM_WINDOW_SIZE_Y
 	{ 0xB012, 0x09, BYTE_LEN, 0 },  // AF_FS_NUM_STEPS
 	{ 0xB018, 0x00, BYTE_LEN, 0 },  // AF_FS_POS_0
-	{ 0xB019, 0x18, BYTE_LEN, 0 },  // AF_FS_POS_1
-	{ 0xB01A, 0x30, BYTE_LEN, 0 },  // AF_FS_POS_2
-	{ 0xB01B, 0x48, BYTE_LEN, 0 },  // AF_FS_POS_3
-	{ 0xB01C, 0x60, BYTE_LEN, 0 },  // AF_FS_POS_4
-	{ 0xB01D, 0x80, BYTE_LEN, 0 },  // AF_FS_POS_5
+	{ 0xB019, 0x28, BYTE_LEN, 0 },  // AF_FS_POS_1
+	{ 0xB01A, 0x40, BYTE_LEN, 0 },  // AF_FS_POS_2
+	{ 0xB01B, 0x58, BYTE_LEN, 0 },  // AF_FS_POS_3
+	{ 0xB01C, 0x70, BYTE_LEN, 0 },  // AF_FS_POS_4
+	{ 0xB01D, 0x88, BYTE_LEN, 0 },  // AF_FS_POS_5
 	{ 0xB01E, 0xA0, BYTE_LEN, 0 },  // AF_FS_POS_6
-	{ 0xB01F, 0xC0, BYTE_LEN, 0 },  // AF_FS_POS_7
-	{ 0xB020, 0xE0, BYTE_LEN, 0 },  // AF_FS_POS_8
+	{ 0xB01F, 0xB8, BYTE_LEN, 0 },  // AF_FS_POS_7
+	{ 0xB020, 0xD0, BYTE_LEN, 0 },  // AF_FS_POS_8
 	{ 0xB002, 0x0002, WORD_LEN, 0 },  // AF_MODE
 	{ 0xB02C, 0x20, BYTE_LEN, 0 },  // AF_HC_STEP
 	{ 0x8404, 0x05, BYTE_LEN, 300 }, 	// SEQ_CMD
@@ -1839,46 +1908,6 @@ static const struct mt9p111_i2c_reg_conf const AF_setting[] = {
 	//{ 0x8404, 0x00, BYTE_POLL, 0 },
 	{ 0x3EDA, 0x6060, WORD_LEN, 0 },      // DAC_LD_14_15
 	{ 0x0018, 0x2008, WORD_LEN, 100 },      // STANDBY_CONTROL_AND_STATUS
-};
-
-static const struct mt9p111_i2c_reg_conf const AF_MARCO_setting[] = {
-    //AF_VCM_enable
-    {0x098E, 0xC400, WORD_LEN, 0},         // LOGICAL_ADDRESS_ACCESS [AFM_ALGO]
-    {0xC400, 0x88, BYTE_LEN, 0},       // AFM_ALGO
-    {0x8419, 0x05, BYTE_LEN, 0},        // SEQ_STATE_CFG_1_AF
-    {0xC400, 0x08, BYTE_LEN, 0},       // AFM_ALGO
-    //AF_settings
-    {0xB002, 0x0305, WORD_LEN, 0},         // AF_MODE
-    {0xB004, 0x0002, WORD_LEN, 0},         // AF_ALGO
-    {0xB008, 0x0003, WORD_LEN, 0},
-    {0xB00A, 0xFFFF, WORD_LEN, 0},
-    {0xB00C, 0xFFFF, WORD_LEN, 0},
-    {0xB00E, 0xFFFF, WORD_LEN, 0},      
-    //set_posMin/Max
-    {0xC40A, 0x0068, WORD_LEN, 0},         // AFM_POS_MIN
-    {0xC40C, 0x00FF, WORD_LEN, 0},         // AFM_POS_MAX
-    //AF_postition_settings
-    {0xB018, 0x78, BYTE_LEN, 0},       // AF_FS_POS_0
-    {0xB019, 0x81, BYTE_LEN, 0},       // AF_FS_POS_1
-    {0xB01A, 0x8A, BYTE_LEN, 0},      // AF_FS_POS_2
-    {0xB01B, 0x93, BYTE_LEN, 0},       // AF_FS_POS_3
-    {0xB01C, 0x9C, BYTE_LEN, 0},      // AF_FS_POS_4
-    {0xB01D, 0xA5, BYTE_LEN, 0},      // AF_FS_POS_5
-    {0xB01E, 0xAE, BYTE_LEN, 0},      // AF_FS_POS_6
-    {0xB01F, 0xB7, BYTE_LEN, 0},       // AF_FS_POS_7
-    {0xB020, 0xC0, BYTE_LEN, 0},       // AF_FS_POS_8
-    {0xB021, 0xC9, BYTE_LEN, 0},       // AF_FS_POS_9
-    {0xB022, 0xD2, BYTE_LEN, 0},      // AF_FS_POS_10
-    {0xB023, 0xDB, BYTE_LEN, 0},      // AF_FS_POS_11
-    {0xB024, 0xE4, BYTE_LEN, 0},       // AF_FS_POS_12
-    {0xB025, 0xED, BYTE_LEN, 0},      // AF_FS_POS_13
-    {0xB026, 0xF6, BYTE_LEN, 0},       // AF_FS_POS_14
-    {0xB027, 0xFD, BYTE_LEN, 0},      // AF_FS_POS_15 
-    {0xB012, 0x0F, BYTE_LEN, 0},       // AF_FS_NUM_STEPS
-    {0xB014, 0x09, BYTE_LEN, 0},       // AF_FS_STEP_SIZE
-    {0x8404, 0x05, BYTE_LEN, 0},        // SEQ_CMD
-    {0x3EDA, 0x6060, WORD_LEN, 0},       // DAC_LD_14_15
-    {0x0018, 0x2008, WORD_LEN, 100},   // STANDBY_CONTROL_AND_STATUS
 };
 
 static const struct mt9p111_i2c_reg_conf const aftrigger_tbl[] = {
@@ -1909,7 +1938,7 @@ static const struct mt9p111_i2c_reg_conf const AB_60MHZ_setting[] = {
 	{ 0x8417, 0x01, BYTE_LEN, 0 },	// SEQ_STATE_CFG_1_FD
 	{ 0xA004, 0x3C, BYTE_LEN, 0 },	// FD_EXPECTED_FLICKER_SOURCE_FREQUENCY
 	{ 0xA002, 0x0003, WORD_LEN, 0 },  // FD_ALGO
-	{ 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+	{ 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const AB_50MHZ_setting[] = {
@@ -1917,7 +1946,7 @@ static const struct mt9p111_i2c_reg_conf const AB_50MHZ_setting[] = {
 	{ 0x8417, 0x01, BYTE_LEN, 0 },	// SEQ_STATE_CFG_1_FD
 	{ 0xA004, 0x32, BYTE_LEN, 0 },	// FD_EXPECTED_FLICKER_SOURCE_FREQUENCY
 	{ 0xA002, 0x0003, WORD_LEN, 0 },  // FD_ALGO
-	{ 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+	{ 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const AB_AUTO_setting[] = {
@@ -1925,7 +1954,7 @@ static const struct mt9p111_i2c_reg_conf const AB_AUTO_setting[] = {
 	{ 0x8417, 0x02, BYTE_LEN, 0 }, // SEQ_STATE_CFG_1_FD
 	{ 0xA004, 0x3C, BYTE_LEN, 0 }, // FD_EXPECTED_FLICKER_SOURCE_FREQUENCY
 	{ 0xA002, 0x0001, WORD_LEN, 0 }, // FD_ALGO
-	{ 0x8404, 0x06, BYTE_LEN, 0 }, // SEQ_CMD
+	{ 0x8404, 0x06, BYTE_LEN, 0 }, // SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const BR0_setting[] = {
@@ -2093,13 +2122,13 @@ static const struct mt9p111_i2c_reg_conf const CONST_P2_setting[] = {
 static const struct mt9p111_i2c_reg_conf const EF_NONE_setting[] = {
     { 0x098E, 0xDC38, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
     { 0xDC38, 0x00, BYTE_LEN, 0 },	// SYS_SELECT_FX
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const EF_MONO_setting[] = {
     { 0x098E, 0xDC38, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
     { 0xDC38, 0x01, BYTE_LEN, 0 },	// SYS_SELECT_FX
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const EF_SEPIA_setting[] = {
@@ -2107,38 +2136,29 @@ static const struct mt9p111_i2c_reg_conf const EF_SEPIA_setting[] = {
     { 0xDC38, 0x02, BYTE_LEN, 0 },	// SYS_SELECT_FX
     { 0xDC3A, 0x18, BYTE_LEN, 0 },	//SYS_SEPIA_CR
     { 0xDC3B, 0xEE, BYTE_LEN, 0 },	//SYS_SEPIA_CB
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const EF_NEGATIVE_setting[] = {
     { 0x098E, 0xDC38, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
     { 0xDC38, 0x03, BYTE_LEN, 0 },	// SYS_SELECT_FX
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
 static const struct mt9p111_i2c_reg_conf const EF_SOLARIZE_setting[] = {
     { 0x098E, 0xDC38, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
     { 0xDC38, 0x05, BYTE_LEN, 0 },	// SYS_SELECT_FX
     { 0xDC39, 0x20, BYTE_LEN, 0 },	// SYS_SOLARIZATION_TH	
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*
 };
 
-static const struct mt9p111_i2c_reg_conf const EXP_AVERAGE_setting[] = {
+static const struct mt9p111_i2c_reg_conf const EXP_NORMAL_setting[] = {
     { 0x098E, 0xB820, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
     { 0xB820, 0x14, BYTE_LEN, 0 },	// STAT_AE_WINDOW_POS_X
     { 0xB821, 0x14, BYTE_LEN, 0 },	//STAT_AE_WINDOW_POS_Y
     { 0xB822, 0xD2, BYTE_LEN, 0 },	// STAT_AE_WINDOW_SIZE_X
     { 0xB823, 0xD2, BYTE_LEN, 0 },	//STAT_AE_WINDOW_SIZE_Y
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
-};
-
-static const struct mt9p111_i2c_reg_conf const EXP_NORMAL_setting[] = {
-    { 0x098E, 0xB820, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
-    { 0xB820, 0x55, BYTE_LEN, 0 },	// STAT_AE_WINDOW_POS_X
-    { 0xB821, 0x55, BYTE_LEN, 0 },	//STAT_AE_WINDOW_POS_Y
-    { 0xB822, 0x5A, BYTE_LEN, 0 },	// STAT_AE_WINDOW_SIZE_X
-    { 0xB823, 0x5A, BYTE_LEN, 0 },	//STAT_AE_WINDOW_SIZE_Y
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*//Div6D1-CL-Camera-HDfail-00*//Div6D1-CL-Camera-SnapShotFail-00*
 };
 
 static const struct mt9p111_i2c_reg_conf const EXP_SPOT_setting[] = {
@@ -2147,7 +2167,16 @@ static const struct mt9p111_i2c_reg_conf const EXP_SPOT_setting[] = {
     { 0xB821, 0x66, BYTE_LEN, 0 },	//STAT_AE_WINDOW_POS_Y
     { 0xB822, 0x33, BYTE_LEN, 0 },	// STAT_AE_WINDOW_SIZE_X
     { 0xB823, 0x33, BYTE_LEN, 0 },	//STAT_AE_WINDOW_SIZE_Y
-    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*//Div6D1-CL-Camera-HDfail-00*//Div6D1-CL-Camera-SnapShotFail-00*
+};
+
+static const struct mt9p111_i2c_reg_conf const EXP_AVERAGE_setting[] = {
+    { 0x098E, 0xB820, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS
+    { 0xB820, 0x26, BYTE_LEN, 0 },	// STAT_AE_WINDOW_POS_X
+    { 0xB821, 0x26, BYTE_LEN, 0 },	//STAT_AE_WINDOW_POS_Y
+    { 0xB822, 0xB5, BYTE_LEN, 0 },	// STAT_AE_WINDOW_SIZE_X
+    { 0xB823, 0xB5, BYTE_LEN, 0 },	//STAT_AE_WINDOW_SIZE_Y
+    { 0x8404, 0x06, BYTE_LEN, 0 },	// SEQ_CMD	//Div2-SW6-MM-KK-WorkaroundSnapshotFail-0//Div6D1-CL-Camera-autofocus-03*//Div6D1-CL-Camera-HDfail-00*//Div6D1-CL-Camera-SnapShotFail-00*
 };
 
 static const struct mt9p111_i2c_reg_conf const SATU_M2_setting[] = {
@@ -2218,7 +2247,7 @@ static const struct mt9p111_i2c_reg_conf const SHARP_P2_setting[] = {
 static const struct mt9p111_i2c_reg_conf const WB_AUTO_setting[] = {
 	{ 0x098E, 0xACB0, WORD_LEN, 0 }, // LOGICAL_ADDRESS_ACCESS [AWB_MIN_ACCEPTED_PRE_AWB_R2G_RATIO]
 	{ 0xACB0, 0x31, BYTE_LEN, 0 }, // AWB_RG_MIN
-	{ 0xACB1, 0x60, BYTE_LEN, 0 }, // AWB_RG_MAX
+	{ 0xACB1, 0x5B, BYTE_LEN, 0 }, // AWB_RG_MAX
 	{ 0xACB4, 0x2A, BYTE_LEN, 0 }, // AWB_BG_MIN
 	{ 0xACB5, 0x5B, BYTE_LEN, 0 }, // AWB_BG_MAX
 	{ 0xACB2, 0x3C, BYTE_LEN, 0 }, // AWB_RG_MIN_BRIGHT
@@ -2354,117 +2383,125 @@ static const struct mt9p111_i2c_reg_conf const ISO_800_setting[] = {
 };
 
 struct mt9p111_reg mt9p111_regs = {
-    .inittbl = init_tbl,
-    .inittbl_size = ARRAY_SIZE(init_tbl),
+	.inittbl = init_tbl,
+	.inittbl_size = ARRAY_SIZE(init_tbl),
     .lcyltbl = yellow_light_tbl,
-    .lcyltbl_size = ARRAY_SIZE(yellow_light_tbl),
-    .lcdltbl = lc_outdoor_daylight_tbl,
-    .lcdltbl_size = ARRAY_SIZE(lc_outdoor_daylight_tbl),
+	.lcyltbl_size = ARRAY_SIZE(yellow_light_tbl),
+	.lcdltbl = lc_outdoor_daylight_tbl,
+	.lcdltbl_size = ARRAY_SIZE(lc_outdoor_daylight_tbl),
     .lctbl = lc_tbl,
-    .lctbl_size = ARRAY_SIZE(lc_tbl),
-    .otpdltbl = otp_outdoor_daylight_tbl,
-    .otpdltbl_size = ARRAY_SIZE(otp_outdoor_daylight_tbl),
-    .otptbl = otp_tbl,
-    .otptbl_size = ARRAY_SIZE(otp_tbl),
-    .iqtbl = iq_tbl,
-    .iqtbl_size = ARRAY_SIZE(iq_tbl),
-    .chartbl = char_tbl,
-    .chartbl_size = ARRAY_SIZE(char_tbl),
-    .aftrigger_tbl = aftrigger_tbl,
-    .aftrigger_tbl_size = ARRAY_SIZE(aftrigger_tbl),
-    .context_a_to_b_tbl = context_a_to_b_tbl,
-    .context_a_to_b_tbl_size = ARRAY_SIZE(context_a_to_b_tbl),
-    .context_b_to_a_tbl = context_b_to_a_tbl,
-    .context_b_to_a_tbl_size = ARRAY_SIZE(context_b_to_a_tbl),	
-    .aftbl = AF_setting,
-    .aftbl_size = ARRAY_SIZE(AF_setting),
-    .marcoaftbl=AF_MARCO_setting,
-    .ab_off_tbl = AB_OFF_setting,
-    .ab_off_tbl_size = ARRAY_SIZE(AB_OFF_setting),
-    .ab_60mhz_tbl = AB_60MHZ_setting,
-    .ab_60mhz_tbl_size = ARRAY_SIZE(AB_60MHZ_setting),
-    .ab_50mhz_tbl = AB_50MHZ_setting,
-    .ab_50mhz_tbl_size = ARRAY_SIZE(AB_50MHZ_setting),
-    .ab_auto_tbl = AB_AUTO_setting,
-    .ab_auto_tbl_size = ARRAY_SIZE(AB_AUTO_setting),	
-    .br0_tbl = BR0_setting,
-    .br0_tbl_size = ARRAY_SIZE(BR0_setting),
-    .br1_tbl = BR1_setting,
-    .br1_tbl_size = ARRAY_SIZE(BR1_setting),
-    .br2_tbl = BR2_setting,
-    .br2_tbl_size = ARRAY_SIZE(BR2_setting),
-    .br3_tbl = BR3_setting,
-    .br3_tbl_size = ARRAY_SIZE(BR3_setting),
-    .br4_tbl = BR4_setting,
-    .br4_tbl_size = ARRAY_SIZE(BR4_setting),
-    .br5_tbl = BR5_setting,
-    .br5_tbl_size = ARRAY_SIZE(BR5_setting),
-    .br6_tbl = BR6_setting,
-    .br6_tbl_size = ARRAY_SIZE(BR6_setting),	
-    .const_m2_tbl = CONST_M2_setting,
-    .const_m2_tbl_size = ARRAY_SIZE(CONST_M2_setting),
-    .const_m1_tbl = CONST_M1_setting,
-    .const_m1_tbl_size = ARRAY_SIZE(CONST_M1_setting),
-    .const_zero_tbl = CONST_ZERO_setting,
-    .const_zero_tbl_size = ARRAY_SIZE(CONST_ZERO_setting),
-    .const_p1_tbl = CONST_P1_setting,
-    .const_p1_tbl_size = ARRAY_SIZE(CONST_P1_setting),
-    .const_p2_tbl = CONST_P2_setting,
-    .const_p2_tbl_size = ARRAY_SIZE(CONST_P2_setting),
-    .effect_none_tbl = EF_NONE_setting,
-    .effect_none_tbl_size = ARRAY_SIZE(EF_NONE_setting),
-    .effect_mono_tbl = EF_MONO_setting,
-    .effect_mono_tbl_size = ARRAY_SIZE(EF_MONO_setting),
-    .effect_sepia_tbl = EF_SEPIA_setting,
-    .effect_sepia_tbl_size = ARRAY_SIZE(EF_SEPIA_setting),
-    .effect_negative_tbl = EF_NEGATIVE_setting,
-    .effect_negative_tbl_size = ARRAY_SIZE(EF_NEGATIVE_setting),
-    .effect_solarize_tbl = EF_SOLARIZE_setting,
-    .effect_solarize_tbl_size = ARRAY_SIZE(EF_SOLARIZE_setting),	
-    .exp_normal_tbl = EXP_NORMAL_setting,
-    .exp_normal_tbl_size = ARRAY_SIZE(EXP_NORMAL_setting),
-    .exp_spot_tbl = EXP_SPOT_setting,
-    .exp_spot_tbl_size = ARRAY_SIZE(EXP_SPOT_setting),
-    .exp_average_tbl = EXP_AVERAGE_setting,
-    .exp_average_tbl_size = ARRAY_SIZE(EXP_AVERAGE_setting),	
-    .satu_m2_tbl = SATU_M2_setting,
-    .satu_m2_tbl_size = ARRAY_SIZE(SATU_M2_setting),
-    .satu_m1_tbl = SATU_M1_setting,
-    .satu_m1_tbl_size = ARRAY_SIZE(SATU_M1_setting),
-    .satu_zero_tbl = SATU_ZERO_setting,
-    .satu_zero_tbl_size = ARRAY_SIZE(SATU_ZERO_setting),
-    .satu_p1_tbl = SATU_P1_setting,
-    .satu_p1_tbl_size = ARRAY_SIZE(SATU_P1_setting),
-    .satu_p2_tbl = SATU_P2_setting,
-    .satu_p2_tbl_size = ARRAY_SIZE(SATU_P2_setting),	
-    .sharp_m2_tbl = SHARP_M2_setting,
-    .sharp_m2_tbl_size = ARRAY_SIZE(SHARP_M2_setting),
-    .sharp_m1_tbl = SHARP_M1_setting,
-    .sharp_m1_tbl_size = ARRAY_SIZE(SHARP_M1_setting),
-    .sharp_zero_tbl = SHARP_ZERO_setting,
-    .sharp_zero_tbl_size = ARRAY_SIZE(SHARP_ZERO_setting),
-    .sharp_p1_tbl = SHARP_P1_setting,
-    .sharp_p1_tbl_size = ARRAY_SIZE(SHARP_P1_setting),
-    .sharp_p2_tbl = SHARP_P2_setting,
-    .sharp_p2_tbl_size = ARRAY_SIZE(SHARP_P2_setting),	
-    .wb_auto_tbl = WB_AUTO_setting,
-    .wb_auto_tbl_size = ARRAY_SIZE(WB_AUTO_setting),
-    .wb_daylight_tbl = WB_DAYLIGHT_setting,
-    .wb_daylight_tbl_size = ARRAY_SIZE(WB_DAYLIGHT_setting),
-    .wb_cloudy_daylight_tbl = WB_CLOUDY_DAYLIGHT_setting,
-    .wb_cloudy_daylight_tbl_size = ARRAY_SIZE(WB_CLOUDY_DAYLIGHT_setting),
-    .wb_incandescent_tbl = WB_INCANDESCENT_setting,
-    .wb_incandescent_tbl_size = ARRAY_SIZE(WB_INCANDESCENT_setting),
-    .wb_fluorescent_tbl = WB_FLUORESCENT_setting,
-    .wb_fluorescent_tbl_size = ARRAY_SIZE(WB_FLUORESCENT_setting),	
-    .iso_auto_tbl = ISO_AUTO_setting,
-    .iso_auto_tbl_size = ARRAY_SIZE(ISO_AUTO_setting),
-    .iso_100_tbl = ISO_100_setting,
-    .iso_100_tbl_size = ARRAY_SIZE(ISO_100_setting),
-    .iso_200_tbl = ISO_200_setting,
-    .iso_200_tbl_size = ARRAY_SIZE(ISO_200_setting),
-    .iso_400_tbl = ISO_400_setting,
-    .iso_400_tbl_size = ARRAY_SIZE(ISO_400_setting),
-    .iso_800_tbl = ISO_800_setting,
-    .iso_800_tbl_size = ARRAY_SIZE(ISO_800_setting),		
+	.lctbl_size = ARRAY_SIZE(lc_tbl),
+	.otpdltbl = otp_outdoor_daylight_tbl,
+	.otpdltbl_size = ARRAY_SIZE(otp_outdoor_daylight_tbl),
+	.otptbl = otp_tbl,
+	.otptbl_size = ARRAY_SIZE(otp_tbl),
+	.iqtbl = iq_tbl,
+	.iqtbl_size = ARRAY_SIZE(iq_tbl),
+	.chartbl = char_tbl,
+	.chartbl_size = ARRAY_SIZE(char_tbl),
+	.aftrigger_tbl = aftrigger_tbl,
+	.aftrigger_tbl_size = ARRAY_SIZE(aftrigger_tbl),
+	.context_a_to_b_tbl = context_a_to_b_tbl,
+	.context_a_to_b_tbl_size = ARRAY_SIZE(context_a_to_b_tbl),
+	.context_b_to_a_tbl = context_b_to_a_tbl,
+	.context_b_to_a_tbl_size = ARRAY_SIZE(context_b_to_a_tbl),	
+	.aftbl = AF_setting,
+	.aftbl_size = ARRAY_SIZE(AF_setting),	
+	.ab_off_tbl = AB_OFF_setting,
+	.ab_off_tbl_size = ARRAY_SIZE(AB_OFF_setting),
+	.ab_60mhz_tbl = AB_60MHZ_setting,
+	.ab_60mhz_tbl_size = ARRAY_SIZE(AB_60MHZ_setting),
+	.ab_50mhz_tbl = AB_50MHZ_setting,
+	.ab_50mhz_tbl_size = ARRAY_SIZE(AB_50MHZ_setting),
+	.ab_auto_tbl = AB_AUTO_setting,
+	.ab_auto_tbl_size = ARRAY_SIZE(AB_AUTO_setting),	
+	.br0_tbl = BR0_setting,
+	.br0_tbl_size = ARRAY_SIZE(BR0_setting),
+	.br1_tbl = BR1_setting,
+	.br1_tbl_size = ARRAY_SIZE(BR1_setting),
+	.br2_tbl = BR2_setting,
+	.br2_tbl_size = ARRAY_SIZE(BR2_setting),
+	.br3_tbl = BR3_setting,
+	.br3_tbl_size = ARRAY_SIZE(BR3_setting),
+	.br4_tbl = BR4_setting,
+	.br4_tbl_size = ARRAY_SIZE(BR4_setting),
+	.br5_tbl = BR5_setting,
+	.br5_tbl_size = ARRAY_SIZE(BR5_setting),
+	.br6_tbl = BR6_setting,
+	.br6_tbl_size = ARRAY_SIZE(BR6_setting),	
+	.const_m2_tbl = CONST_M2_setting,
+	.const_m2_tbl_size = ARRAY_SIZE(CONST_M2_setting),
+	.const_m1_tbl = CONST_M1_setting,
+	.const_m1_tbl_size = ARRAY_SIZE(CONST_M1_setting),
+	.const_zero_tbl = CONST_ZERO_setting,
+	.const_zero_tbl_size = ARRAY_SIZE(CONST_ZERO_setting),
+	.const_p1_tbl = CONST_P1_setting,
+	.const_p1_tbl_size = ARRAY_SIZE(CONST_P1_setting),
+	.const_p2_tbl = CONST_P2_setting,
+	.const_p2_tbl_size = ARRAY_SIZE(CONST_P2_setting),
+	.effect_none_tbl = EF_NONE_setting,
+	.effect_none_tbl_size = ARRAY_SIZE(EF_NONE_setting),
+	.effect_mono_tbl = EF_MONO_setting,
+	.effect_mono_tbl_size = ARRAY_SIZE(EF_MONO_setting),
+	.effect_sepia_tbl = EF_SEPIA_setting,
+	.effect_sepia_tbl_size = ARRAY_SIZE(EF_SEPIA_setting),
+	.effect_negative_tbl = EF_NEGATIVE_setting,
+	.effect_negative_tbl_size = ARRAY_SIZE(EF_NEGATIVE_setting),
+	.effect_solarize_tbl = EF_SOLARIZE_setting,
+	.effect_solarize_tbl_size = ARRAY_SIZE(EF_SOLARIZE_setting),	
+	.exp_normal_tbl = EXP_NORMAL_setting,
+	.exp_normal_tbl_size = ARRAY_SIZE(EXP_NORMAL_setting),
+	.exp_spot_tbl = EXP_SPOT_setting,
+	.exp_spot_tbl_size = ARRAY_SIZE(EXP_SPOT_setting),
+	.exp_average_tbl = EXP_AVERAGE_setting,
+	.exp_average_tbl_size = ARRAY_SIZE(EXP_AVERAGE_setting),	
+	.satu_m2_tbl = SATU_M2_setting,
+	.satu_m2_tbl_size = ARRAY_SIZE(SATU_M2_setting),
+	.satu_m1_tbl = SATU_M1_setting,
+	.satu_m1_tbl_size = ARRAY_SIZE(SATU_M1_setting),
+	.satu_zero_tbl = SATU_ZERO_setting,
+	.satu_zero_tbl_size = ARRAY_SIZE(SATU_ZERO_setting),
+	.satu_p1_tbl = SATU_P1_setting,
+	.satu_p1_tbl_size = ARRAY_SIZE(SATU_P1_setting),
+	.satu_p2_tbl = SATU_P2_setting,
+	.satu_p2_tbl_size = ARRAY_SIZE(SATU_P2_setting),	
+	.sharp_m2_tbl = SHARP_M2_setting,
+	.sharp_m2_tbl_size = ARRAY_SIZE(SHARP_M2_setting),
+	.sharp_m1_tbl = SHARP_M1_setting,
+	.sharp_m1_tbl_size = ARRAY_SIZE(SHARP_M1_setting),
+	.sharp_zero_tbl = SHARP_ZERO_setting,
+	.sharp_zero_tbl_size = ARRAY_SIZE(SHARP_ZERO_setting),
+	.sharp_p1_tbl = SHARP_P1_setting,
+	.sharp_p1_tbl_size = ARRAY_SIZE(SHARP_P1_setting),
+	.sharp_p2_tbl = SHARP_P2_setting,
+	.sharp_p2_tbl_size = ARRAY_SIZE(SHARP_P2_setting),	
+	.wb_auto_tbl = WB_AUTO_setting,
+	.wb_auto_tbl_size = ARRAY_SIZE(WB_AUTO_setting),
+	.wb_daylight_tbl = WB_DAYLIGHT_setting,
+	.wb_daylight_tbl_size = ARRAY_SIZE(WB_DAYLIGHT_setting),
+	.wb_cloudy_daylight_tbl = WB_CLOUDY_DAYLIGHT_setting,
+	.wb_cloudy_daylight_tbl_size = ARRAY_SIZE(WB_CLOUDY_DAYLIGHT_setting),
+	.wb_incandescent_tbl = WB_INCANDESCENT_setting,
+	.wb_incandescent_tbl_size = ARRAY_SIZE(WB_INCANDESCENT_setting),
+	.wb_fluorescent_tbl = WB_FLUORESCENT_setting,
+	.wb_fluorescent_tbl_size = ARRAY_SIZE(WB_FLUORESCENT_setting),	
+	.hd_inittbl = hd_init_tbl,
+	.hd_inittbl_size = ARRAY_SIZE(hd_init_tbl),
+	.hd_to_vga_tbl = hd_to_vga_tbl,
+	.hd_to_vga_tbl_size = ARRAY_SIZE(hd_to_vga_tbl),
+    .d1_inittbl = d1_init_tbl,
+    .d1_inittbl_size = ARRAY_SIZE(d1_init_tbl),
+    .wvga_inittbl = wvga_init_tbl,
+    .wvga_inittbl_size = ARRAY_SIZE(wvga_init_tbl),
+	.iso_auto_tbl = ISO_AUTO_setting,
+	.iso_auto_tbl_size = ARRAY_SIZE(ISO_AUTO_setting),
+	.iso_100_tbl = ISO_100_setting,
+	.iso_100_tbl_size = ARRAY_SIZE(ISO_100_setting),
+	.iso_200_tbl = ISO_200_setting,
+	.iso_200_tbl_size = ARRAY_SIZE(ISO_200_setting),
+	.iso_400_tbl = ISO_400_setting,
+	.iso_400_tbl_size = ARRAY_SIZE(ISO_400_setting),
+	.iso_800_tbl = ISO_800_setting,
+	.iso_800_tbl_size = ARRAY_SIZE(ISO_800_setting),		
 };
+

@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,12 +19,12 @@
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/io.h>
-#include <linux/pm_qos_params.h>
 #include <mach/gpio.h>
 #include <mach/board.h>
 #include <mach/camera.h>
 #include <mach/vreg.h>
 #include <mach/clk.h>
+#include <asm/mach-types.h>
 
 #define CAMIF_CFG_RMSK             0x1fffff
 #define CAM_SEL_BMSK               0x2
@@ -94,21 +94,6 @@
 #define	MIPI_PHY_D1_CONTROL_MIPI_CLK_PHY_SHUTDOWNB_SHFT		0x9
 #define	MIPI_PHY_D1_CONTROL_MIPI_DATA_PHY_SHUTDOWNB_SHFT	0x8
 
-#define	CAMIO_VFE_CLK_SNAP			122880000
-#define	CAMIO_VFE_CLK_PREV			122880000
-
-#ifdef CONFIG_MSM_NPA_SYSTEM_BUS
-/* NPA Flow IDs */
-#define MSM_AXI_QOS_PREVIEW     MSM_AXI_FLOW_CAMERA_PREVIEW_HIGH
-#define MSM_AXI_QOS_SNAPSHOT    MSM_AXI_FLOW_CAMERA_SNAPSHOT_12MP
-#define MSM_AXI_QOS_RECORDING   MSM_AXI_FLOW_CAMERA_RECORDING_720P
-#else
-/* AXI rates in KHz */
-#define MSM_AXI_QOS_PREVIEW     192000
-#define MSM_AXI_QOS_SNAPSHOT    192000
-#define MSM_AXI_QOS_RECORDING   192000
-#endif
-
 static struct clk *camio_vfe_mdc_clk;
 static struct clk *camio_mdc_clk;
 static struct clk *camio_vfe_clk;
@@ -122,9 +107,9 @@ static struct clk *camio_csi_vfe_clk;
 static struct clk *camio_jpeg_clk;
 static struct clk *camio_jpeg_pclk;
 static struct clk *camio_vpe_clk;
-//static struct vreg *vreg_gp2;    /* FIHTDC, Div2-SW2-BSP, Ming, LCM */
-//static struct vreg *vreg_lvsw1;
-//static struct vreg *vreg_gp6;
+//static struct vreg *vreg_gp2;
+///static struct vreg *vreg_gp2;   /* FIHTDC, Div2-SW2-BSP, Ming, LCM */
+///static struct vreg *vreg_lvsw1; /* FIHTDC, Div2-SW2-BSP, Ming, LCM */
 //static struct vreg *vreg_gp16;
 static struct msm_camera_io_ext camio_ext;
 static struct msm_camera_io_clk camio_clk;
@@ -207,7 +192,7 @@ void msm_io_memcpy(void __iomem *dest_addr, void __iomem *src_addr, u32 len)
 	msm_io_dump(dest_addr, len);
 }
 
-static void msm_camera_vreg_enable(struct platform_device *pdev)
+static void msm_camera_vreg_enable(void)
 {
 /* FIHTDC, Div2-SW2-BSP, Ming, LCM { */
 /* TODO:  enable correct vreg to avoid damaging other components */
@@ -228,7 +213,7 @@ static void msm_camera_vreg_enable(struct platform_device *pdev)
 	if (vreg_enable(vreg_gp2)) {
 		pr_err("%s: VREG GP2 enable failed\n", __func__);
 		goto gp2_put;
-	}
+		}
 
 	vreg_lvsw1 = vreg_get(NULL, "lvsw1");
 	if (IS_ERR(vreg_lvsw1)) {
@@ -246,7 +231,7 @@ static void msm_camera_vreg_enable(struct platform_device *pdev)
 		goto lvsw1_put;
 	}
 
-	if (!strcmp(pdev->name, "msm_camera_sn12m0pz")) {
+	if (machine_is_msm7x30_fluid()) {
 		vreg_gp6 = vreg_get(NULL, "gp6");
 		if (IS_ERR(vreg_gp6)) {
 			pr_err("%s: VREG GP6 get failed %ld\n", __func__,
@@ -274,7 +259,7 @@ static void msm_camera_vreg_enable(struct platform_device *pdev)
 
 		if (vreg_set_level(vreg_gp16, 1200)) {
 			pr_err("%s: VREG GP16 set failed\n", __func__);
-			goto gp16_put;
+			goto gp6_disable;
 		}
 
 		if (vreg_enable(vreg_gp16)) {
@@ -286,22 +271,20 @@ static void msm_camera_vreg_enable(struct platform_device *pdev)
 
 gp16_put:
 	vreg_put(vreg_gp16);
-	vreg_gp16 = NULL;
 gp6_disable:
-	 vreg_disable(vreg_gp6);
+	/* Voting off gp6 causes touchscreen i2c issues */
+	/* vreg_disable(vreg_gp6); */
 gp6_put:
 	vreg_put(vreg_gp6);
-	vreg_gp6 = NULL;
 lvsw1_disable:
 	vreg_disable(vreg_lvsw1);
 lvsw1_put:
 	vreg_put(vreg_lvsw1);
-	vreg_lvsw1 = NULL;
 gp2_disable:
 	vreg_disable(vreg_gp2);
 gp2_put:
 	vreg_put(vreg_gp2);
-	vreg_gp2 = NULL;
+	
 #endif
 /* } FIHTDC, Div2-SW2-BSP, Ming, LCM */	
 }
@@ -314,22 +297,19 @@ static void msm_camera_vreg_disable(void)
 	if (vreg_gp2) {
 		vreg_disable(vreg_gp2);
 		vreg_put(vreg_gp2);
-		vreg_gp2 = NULL;
 	}
 	if (vreg_lvsw1) {
 		vreg_disable(vreg_lvsw1);
 		vreg_put(vreg_lvsw1);
-		vreg_lvsw1 = NULL;
 	}
 	if (vreg_gp6) {
-		vreg_disable(vreg_gp6);
+		/* Voting off gp6 causes touchscreen i2c issues */
+		/* vreg_disable(vreg_gp6); */
 		vreg_put(vreg_gp6);
-		vreg_gp6 = NULL;
 	}
 	if (vreg_gp16) {
 		vreg_disable(vreg_gp16);
 		vreg_put(vreg_gp16);
-		vreg_gp16 = NULL;
 	}
 #endif
 /* } FIHTDC, Div2-SW2-BSP, Ming, LCM */
@@ -487,12 +467,6 @@ void msm_camio_clk_rate_set(int rate)
 	clk_set_rate(clk, rate);
 }
 
-void msm_camio_vfe_clk_rate_set(int rate)
-{
-	struct clk *clk = camio_vfe_clk;
-	clk_set_rate(clk, rate);
-}
-
 void msm_camio_clk_rate_set_2(struct clk *clk, int rate)
 {
 	clk_set_rate(clk, rate);
@@ -606,13 +580,6 @@ void msm_camio_disable(struct platform_device *pdev)
 	if (!sinfo->csi_if) {
 		msm_camio_clk_disable(CAMIO_VFE_CAMIF_CLK);
 	} else {
-		val = (0x0 << MIPI_CALIBRATION_CONTROL_SWCAL_CAL_EN_SHFT) |
-		(0x0<<MIPI_CALIBRATION_CONTROL_SWCAL_STRENGTH_OVERRIDE_EN_SHFT)|
-		(0x0 << MIPI_CALIBRATION_CONTROL_CAL_SW_HW_MODE_SHFT) |
-		(0x0 << MIPI_CALIBRATION_CONTROL_MANUAL_OVERRIDE_EN_SHFT);
-		CDBG("%s MIPI_CALIBRATION_CONTROL val=0x%x\n", __func__, val);
-		msm_io_w(val, csibase + MIPI_CALIBRATION_CONTROL);
-
 		val = (20 <<
 			MIPI_PHY_D0_CONTROL2_SETTLE_COUNT_SHFT) |
 			(0x0F << MIPI_PHY_D0_CONTROL2_HS_TERM_IMP_SHFT) |
@@ -711,10 +678,8 @@ int msm_camio_probe_on(struct platform_device *pdev)
 {
 	struct msm_camera_sensor_info *sinfo = pdev->dev.platform_data;
 	struct msm_camera_device_platform_data *camdev = sinfo->pdata;
-	camio_clk = camdev->ioclk;
-	camio_ext = camdev->ioext;
 	camdev->camera_gpio_on();
-	msm_camera_vreg_enable(pdev);
+	msm_camera_vreg_enable();
 	return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
 }
 
@@ -735,7 +700,7 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 	camio_clk = camdev->ioclk;
 	camio_ext = camdev->ioext;
 	camdev->camera_gpio_on();
-	msm_camera_vreg_enable(pdev);
+	msm_camera_vreg_enable();
 	msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
 	msm_camio_clk_enable(CAMIO_CAMIF_PAD_PBDG_CLK);
 	if (!sinfo->csi_if) {
@@ -875,29 +840,4 @@ int msm_camio_csi_config(struct msm_camera_csi_params *csi_params)
 	msm_io_w(0xFFF7F3FF, csibase + MIPI_INTERRUPT_STATUS);
 
 	return rc;
-}
-void msm_camio_set_perf_lvl(enum msm_bus_perf_setting perf_setting)
-{
-	switch (perf_setting) {
-	case S_INIT:
-		add_axi_qos();
-		break;
-	case S_PREVIEW:
-		update_axi_qos(MSM_AXI_QOS_PREVIEW);
-		break;
-	case S_VIDEO:
-		update_axi_qos(MSM_AXI_QOS_RECORDING);
-		break;
-	case S_CAPTURE:
-		update_axi_qos(MSM_AXI_QOS_SNAPSHOT);
-		break;
-	case S_DEFAULT:
-		update_axi_qos(PM_QOS_DEFAULT_VALUE);
-		break;
-	case S_EXIT:
-		release_axi_qos();
-		break;
-	default:
-		CDBG("%s: INVALID CASE\n", __func__);
-	}
 }

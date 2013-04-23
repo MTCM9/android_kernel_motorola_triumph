@@ -479,7 +479,7 @@ static int __devinit ds2482_probe(struct i2c_client *client,
     ret = ds2482_config_gpio();
     if (ret < 0) {
         dev_err(&client->dev, "Config SLPZ pin failed\n");
-        mutex_destroy(&ds2482_drvdata.ds2482_lock);
+        mutex_destroy(&ds2482_drvdata.ds2482_suspend_lock);
 #ifdef CONFIG_FIH_FTM_BATTERY_CHARGING
         g_err_code = -4;
 #else

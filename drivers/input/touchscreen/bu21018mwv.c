@@ -6,6 +6,7 @@
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/earlysuspend.h>
+#include <linux/slab.h>
 #include <mach/gpio.h>
 #include <mach/vreg.h>
 #include <linux/miscdevice.h>
@@ -15,6 +16,8 @@
 #include <linux/bu21018mwv_fw1.h>
 #include "../../../arch/arm/mach-msm/smd_private.h"
 #include "../../../arch/arm/mach-msm/proc_comm.h"
+
+extern int innolux_ts_active;
 
 //
 extern unsigned int fih_get_product_id(void);
@@ -882,6 +885,8 @@ static void bu21018mwv_isr_workqueue(struct work_struct *work)
 			input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 255);
 			input_report_abs(ts->touch_input, ABS_MT_POSITION_X, data[0]);
 			input_report_abs(ts->touch_input, ABS_MT_POSITION_Y, data[1]);
+			input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 255);
+			input_report_key(ts->touch_input, BTN_TOUCH, 1);
 			input_mt_sync(ts->touch_input);
 		}
 		
@@ -890,12 +895,14 @@ static void bu21018mwv_isr_workqueue(struct work_struct *work)
 			input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 255);
 			input_report_abs(ts->touch_input, ABS_MT_POSITION_X, data[2]);
 			input_report_abs(ts->touch_input, ABS_MT_POSITION_Y, data[3]);
+			input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 255);
+			input_report_key(ts->touch_input, BTN_TOUCH, 1);
 			input_mt_sync(ts->touch_input);
 		}
 #else
 		input_report_abs(ts->touch_input, ABS_X, data[0]);
 		input_report_abs(ts->touch_input, ABS_Y, data[1]);
-		input_report_abs(ts->touch_input, ABS_PRESSURE, 255);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 255);
 		input_report_key(ts->touch_input, BTN_TOUCH, 1);
 #endif
 		input_sync(ts->touch_input);
@@ -907,9 +914,11 @@ static void bu21018mwv_isr_workqueue(struct work_struct *work)
 		{
 #ifdef BU21018MWV_MT
 		input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 0);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 0);
+		input_report_key(ts->touch_input, BTN_TOUCH, 0);
 		input_mt_sync(ts->touch_input);
 #else
-		input_report_abs(ts->touch_input, ABS_PRESSURE, 0);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 0);
 		input_report_key(ts->touch_input, BTN_TOUCH, 0);
 #endif
 			input_sync(ts->touch_input);
@@ -920,9 +929,11 @@ static void bu21018mwv_isr_workqueue(struct work_struct *work)
 	{
 #ifdef BU21018MWV_MT
 		input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 0);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 0);
+		input_report_key(ts->touch_input, BTN_TOUCH, 0);
 		input_mt_sync(ts->touch_input);
 #else
-		input_report_abs(ts->touch_input, ABS_PRESSURE, 0);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 0);
 		input_report_key(ts->touch_input, BTN_TOUCH, 0);
 #endif
 		input_sync(ts->touch_input);
@@ -998,6 +1009,8 @@ static void bu21018mwv_isr_workqueue_pr1(struct work_struct *work)
 			input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 255);
 			input_report_abs(ts->touch_input, ABS_MT_POSITION_X, data[0]);
 			input_report_abs(ts->touch_input, ABS_MT_POSITION_Y, data[1]);
+			input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 255);
+			input_report_key(ts->touch_input, BTN_TOUCH, 1);
 			input_mt_sync(ts->touch_input);
 			
 			if (getTouch > 1)
@@ -1005,12 +1018,14 @@ static void bu21018mwv_isr_workqueue_pr1(struct work_struct *work)
 				input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 255);
 				input_report_abs(ts->touch_input, ABS_MT_POSITION_X, data[2]);
 				input_report_abs(ts->touch_input, ABS_MT_POSITION_Y, data[3]);
+				input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 255);
+				input_report_key(ts->touch_input, BTN_TOUCH, 1);
 				input_mt_sync(ts->touch_input);
 			}
 #else
 			input_report_abs(ts->touch_input, ABS_X, data[0]);
 			input_report_abs(ts->touch_input, ABS_Y, data[1]);
-			input_report_abs(ts->touch_input, ABS_PRESSURE, 255);
+			input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 255);
 			input_report_key(ts->touch_input, BTN_TOUCH, 1);
 #endif
 			input_sync(ts->touch_input);
@@ -1044,9 +1059,11 @@ static void bu21018mwv_isr_workqueue_pr1(struct work_struct *work)
 	{
 #ifdef BU21018MWV_MT
 		input_report_abs(ts->touch_input, ABS_MT_TOUCH_MAJOR, 0);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 0);
+		input_report_key(ts->touch_input, BTN_TOUCH, 0);
 		input_mt_sync(ts->touch_input);
 #else
-		input_report_abs(ts->touch_input, ABS_PRESSURE, 0);
+		input_report_abs(ts->touch_input, ABS_MT_PRESSURE, 0);
 		input_report_key(ts->touch_input, BTN_TOUCH, 0);
 #endif
 		input_sync(ts->touch_input);
@@ -1349,6 +1366,7 @@ static int bu21018mwv_probe(struct i2c_client *client, const struct i2c_device_i
     input_set_abs_params(touch_input, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
     input_set_abs_params(touch_input, ABS_MT_POSITION_X, t_min_x, t_max_x, 0, 0);
     input_set_abs_params(touch_input, ABS_MT_POSITION_Y, t_min_y, t_max_y, 0, 0);
+    input_set_abs_params(touch_input, ABS_PRESSURE, 0, 255, 0, 0);
 #else
 	input_set_abs_params(touch_input, ABS_X, t_min_x, t_max_x, 0, 0);
 	input_set_abs_params(touch_input, ABS_Y, t_min_y, t_max_y, 0, 0);

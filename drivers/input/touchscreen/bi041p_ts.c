@@ -9,10 +9,12 @@
 #include <mach/gpio.h>
 #include <mach/vreg.h>
 #include <linux/bi041p_ts.h>
+#include <linux/miscdevice.h>
 #include <asm/uaccess.h>
 #include "../../../arch/arm/mach-msm/smd_private.h"
 #include "../../../arch/arm/mach-msm/proc_comm.h"
 
+extern int innolux_ts_active;
 #ifdef CONFIG_FIH_TOUCHSCREEN_BU21018MWV
 extern int bu21018mwv_active;
 #endif
@@ -24,6 +26,8 @@ static bool bTouch2 = 0;
 #ifdef CONFIG_FIH_FTM
 static int file_path = 0;
 #endif
+extern int i2c_elan_touch_update;
+extern int bq275x0_battery_elan_update_mode;
 
 bool bBackCapKeyPressed = 0;
 bool bMenuCapKeyPressed = 0;
